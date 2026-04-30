@@ -130,3 +130,8 @@
     @apply font-sans;
   }
 }
+.nav-link:hover {
+  color: #3EB489 !important;
+  transition: color 0.2s ease;
+}
+
