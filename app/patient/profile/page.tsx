@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
 import api from "@/lib/api";
 
 const COLORS = {
@@ -15,24 +16,81 @@ const COLORS = {
   navyMid: "rgba(44,62,80,0.5)",
 };
 
+function EyeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
+function PasswordInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder: string;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div style={{ position: "relative" }}>
+      <input
+        type={show ? "text" : "password"}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          width: "100%", padding: "14px 48px 14px 18px", borderRadius: 14,
+          border: `1px solid ${COLORS.mint}`, fontSize: 14, color: COLORS.navy,
+          fontFamily: "'Josefin Sans', sans-serif", outline: "none",
+          backgroundColor: COLORS.white, boxSizing: "border-box",
+        }}
+        onFocus={(e) => (e.target.style.borderColor = COLORS.green)}
+        onBlur={(e) => (e.target.style.borderColor = COLORS.mint)}
+      />
+      <button
+        type="button"
+        onMouseDown={(e) => e.preventDefault()}
+        onTouchStart={(e) => e.preventDefault()}
+        onClick={() => setShow((prev) => !prev)}
+        style={{
+          position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)",
+          background: "none", border: "none", cursor: "pointer",
+          color: COLORS.navyMid, padding: 4,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}
+      >
+        {show ? <EyeOffIcon /> : <EyeIcon />}
+      </button>
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"info" | "password">("info");
-  const [form, setForm] = useState({ full_name: "", email: "", phone_number: "" });
+  const [form, setForm] = useState({
+    full_name: user?.full_name || "",
+    email: user?.email || "",
+    phone_number: user?.phone_number || "",
+  });
   const [passwordForm, setPasswordForm] = useState({ current_password: "", new_password: "", confirm_password: "" });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-
-  useEffect(() => {
-    if (user) {
-      setForm({
-        full_name: user.full_name || "",
-        email: user.email || "",
-        phone_number: user.phone_number || "",
-      });
-    }
-  }, [user]);
 
   const handleSaveInfo = async () => {
     setSaving(true);
@@ -40,8 +98,12 @@ export default function ProfilePage() {
     try {
       await api.patch("/me", { full_name: form.full_name, phone_number: form.phone_number });
       setMessage({ type: "success", text: "Profile updated successfully!" });
-    } catch {
-      setMessage({ type: "error", text: "Failed to update profile." });
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setMessage({ type: "error", text: err.response?.data?.message || "Failed to update profile." });
+      } else {
+        setMessage({ type: "error", text: "Failed to update profile." });
+      }
     } finally {
       setSaving(false);
     }
@@ -62,8 +124,12 @@ export default function ProfilePage() {
       await api.patch("/me", { current_password: passwordForm.current_password, new_password: passwordForm.new_password });
       setMessage({ type: "success", text: "Password changed successfully!" });
       setPasswordForm({ current_password: "", new_password: "", confirm_password: "" });
-    } catch {
-      setMessage({ type: "error", text: "Current password is incorrect." });
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setMessage({ type: "error", text: err.response?.data?.message || "Current password is incorrect." });
+      } else {
+        setMessage({ type: "error", text: "Current password is incorrect." });
+      }
     } finally {
       setSaving(false);
     }
@@ -88,9 +154,11 @@ export default function ProfilePage() {
 
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "48px 24px" }}>
 
-        {/* Profile header */}
-        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} style={{ backgroundColor: COLORS.white, borderRadius: 24, padding: "36px 40px", marginBottom: 24, display: "flex", alignItems: "center", gap: 24, boxShadow: "0 4px 24px rgba(62,180,137,0.08)", border: "1px solid rgba(167,228,216,0.3)" }}>
-          {/* Avatar */}
+        {/* Profile header card */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
+          style={{ backgroundColor: COLORS.white, borderRadius: 24, padding: "36px 40px", marginBottom: 24, display: "flex", alignItems: "center", gap: 24, boxShadow: "0 4px 24px rgba(62,180,137,0.08)", border: "1px solid rgba(167,228,216,0.3)" }}
+        >
           <motion.div
             whileHover={{ scale: 1.05 }}
             style={{ width: 88, height: 88, borderRadius: "50%", backgroundColor: COLORS.lightMint, border: `3px solid ${COLORS.mint}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 900, color: COLORS.green, flexShrink: 0 }}
@@ -107,15 +175,14 @@ export default function ProfilePage() {
           </div>
         </motion.div>
 
-        {/* Tabs */}
-        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} style={{ backgroundColor: COLORS.white, borderRadius: 24, overflow: "hidden", boxShadow: "0 4px 24px rgba(62,180,137,0.08)", border: "1px solid rgba(167,228,216,0.3)" }}>
-
+        {/* Tabs card */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          style={{ backgroundColor: COLORS.white, borderRadius: 24, overflow: "hidden", boxShadow: "0 4px 24px rgba(62,180,137,0.08)", border: "1px solid rgba(167,228,216,0.3)" }}
+        >
           {/* Tab headers */}
           <div style={{ display: "flex", borderBottom: "1px solid rgba(167,228,216,0.4)" }}>
-            {[
-              { key: "info", label: "Personal Info" },
-              { key: "password", label: "Change Password" },
-            ].map((tab) => (
+            {[{ key: "info", label: "Personal Info" }, { key: "password", label: "Change Password" }].map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => { setActiveTab(tab.key as "info" | "password"); setMessage(null); }}
@@ -134,7 +201,6 @@ export default function ProfilePage() {
             ))}
           </div>
 
-          {/* Tab content */}
           <div style={{ padding: "36px 40px" }}>
 
             {/* Message */}
@@ -142,13 +208,19 @@ export default function ProfilePage() {
               {message && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                  style={{ padding: "12px 18px", borderRadius: 12, marginBottom: 24, fontSize: 13, fontWeight: 600, backgroundColor: message.type === "success" ? "rgba(62,180,137,0.1)" : "rgba(224,85,85,0.08)", color: message.type === "success" ? COLORS.green : "#e05555", border: `1px solid ${message.type === "success" ? COLORS.mint : "rgba(224,85,85,0.3)"}` }}
+                  style={{
+                    padding: "12px 18px", borderRadius: 12, marginBottom: 24, fontSize: 13, fontWeight: 600,
+                    backgroundColor: message.type === "success" ? "rgba(62,180,137,0.1)" : "rgba(224,85,85,0.08)",
+                    color: message.type === "success" ? COLORS.green : "#e05555",
+                    border: `1px solid ${message.type === "success" ? COLORS.mint : "rgba(224,85,85,0.3)"}`,
+                  }}
                 >
                   {message.text}
                 </motion.div>
               )}
             </AnimatePresence>
 
+            {/* Personal Info Tab */}
             {activeTab === "info" && (
               <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                 <div>
@@ -157,6 +229,8 @@ export default function ProfilePage() {
                     value={form.full_name}
                     onChange={(e) => setForm({ ...form, full_name: e.target.value })}
                     style={{ width: "100%", padding: "14px 18px", borderRadius: 14, border: `1px solid ${COLORS.mint}`, fontSize: 14, color: COLORS.navy, fontFamily: "inherit", outline: "none", backgroundColor: COLORS.white, boxSizing: "border-box" }}
+                    onFocus={(e) => (e.target.style.borderColor = COLORS.green)}
+                    onBlur={(e) => (e.target.style.borderColor = COLORS.mint)}
                   />
                 </div>
                 <div>
@@ -164,7 +238,7 @@ export default function ProfilePage() {
                   <input
                     value={form.email}
                     disabled
-                    style={{ width: "100%", padding: "14px 18px", borderRadius: 14, border: `1px solid rgba(167,228,216,0.4)`, fontSize: 14, color: COLORS.navyMid, fontFamily: "inherit", outline: "none", backgroundColor: COLORS.lightMint, boxSizing: "border-box", cursor: "not-allowed" }}
+                    style={{ width: "100%", padding: "14px 18px", borderRadius: 14, border: "1px solid rgba(167,228,216,0.4)", fontSize: 14, color: COLORS.navyMid, fontFamily: "inherit", outline: "none", backgroundColor: COLORS.lightMint, boxSizing: "border-box", cursor: "not-allowed" }}
                   />
                   <p style={{ fontSize: 11, color: COLORS.navyMid, marginTop: 4 }}>Email cannot be changed</p>
                 </div>
@@ -175,42 +249,53 @@ export default function ProfilePage() {
                     onChange={(e) => setForm({ ...form, phone_number: e.target.value })}
                     placeholder="+961 70 000 000"
                     style={{ width: "100%", padding: "14px 18px", borderRadius: 14, border: `1px solid ${COLORS.mint}`, fontSize: 14, color: COLORS.navy, fontFamily: "inherit", outline: "none", backgroundColor: COLORS.white, boxSizing: "border-box" }}
+                    onFocus={(e) => (e.target.style.borderColor = COLORS.green)}
+                    onBlur={(e) => (e.target.style.borderColor = COLORS.mint)}
                   />
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                   onClick={handleSaveInfo}
                   disabled={saving}
-                  style={{ padding: "14px 32px", backgroundColor: COLORS.green, color: "white", border: "none", borderRadius: 999, fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit", alignSelf: "flex-start", boxShadow: "0 8px 24px rgba(62,180,137,0.3)", opacity: saving ? 0.7 : 1 }}
+                  style={{ padding: "14px 32px", backgroundColor: COLORS.green, color: "white", border: "none", borderRadius: 999, fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit", alignSelf: "flex-start", boxShadow: "0 8px 24px rgba(62,180,137,0.3)", opacity: saving ? 0.7 : 1 }}
                 >
                   {saving ? "Saving..." : "Save Changes"}
                 </motion.button>
               </motion.div>
             )}
 
+            {/* Change Password Tab */}
             {activeTab === "password" && (
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                {[
-                  { key: "current_password", label: "Current Password", placeholder: "Enter current password" },
-                  { key: "new_password", label: "New Password", placeholder: "Enter new password" },
-                  { key: "confirm_password", label: "Confirm New Password", placeholder: "Confirm new password" },
-                ].map((field) => (
-                  <div key={field.key}>
-                    <label style={{ display: "block", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: COLORS.navyMid, marginBottom: 8 }}>{field.label}</label>
-                    <input
-                      type="password"
-                      placeholder={field.placeholder}
-                      value={passwordForm[field.key as keyof typeof passwordForm]}
-                      onChange={(e) => setPasswordForm({ ...passwordForm, [field.key]: e.target.value })}
-                      style={{ width: "100%", padding: "14px 18px", borderRadius: 14, border: `1px solid ${COLORS.mint}`, fontSize: 14, color: COLORS.navy, fontFamily: "inherit", outline: "none", backgroundColor: COLORS.white, boxSizing: "border-box" }}
-                    />
-                  </div>
-                ))}
+                <div>
+                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: COLORS.navyMid, marginBottom: 8 }}>Current Password</label>
+                  <PasswordInput
+                    value={passwordForm.current_password}
+                    onChange={(val) => setPasswordForm({ ...passwordForm, current_password: val })}
+                    placeholder="Enter current password"
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: COLORS.navyMid, marginBottom: 8 }}>New Password</label>
+                  <PasswordInput
+                    value={passwordForm.new_password}
+                    onChange={(val) => setPasswordForm({ ...passwordForm, new_password: val })}
+                    placeholder="Enter new password"
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: COLORS.navyMid, marginBottom: 8 }}>Confirm New Password</label>
+                  <PasswordInput
+                    value={passwordForm.confirm_password}
+                    onChange={(val) => setPasswordForm({ ...passwordForm, confirm_password: val })}
+                    placeholder="Confirm new password"
+                  />
+                </div>
                 <motion.button
                   whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                   onClick={handleChangePassword}
                   disabled={saving}
-                  style={{ padding: "14px 32px", backgroundColor: COLORS.navy, color: "white", border: "none", borderRadius: 999, fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit", alignSelf: "flex-start", boxShadow: "0 8px 24px rgba(44,62,80,0.2)", opacity: saving ? 0.7 : 1 }}
+                  style={{ padding: "14px 32px", backgroundColor: COLORS.navy, color: "white", border: "none", borderRadius: 999, fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit", alignSelf: "flex-start", boxShadow: "0 8px 24px rgba(44,62,80,0.2)", opacity: saving ? 0.7 : 1 }}
                 >
                   {saving ? "Changing..." : "Change Password"}
                 </motion.button>
@@ -219,11 +304,17 @@ export default function ProfilePage() {
           </div>
         </motion.div>
 
-        {/* Danger zone */}
-        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} style={{ backgroundColor: COLORS.white, borderRadius: 24, padding: "28px 40px", marginTop: 24, border: "1px solid rgba(224,85,85,0.2)", boxShadow: "0 4px 24px rgba(224,85,85,0.04)" }}>
+        {/* Sign Out */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+          style={{ backgroundColor: COLORS.white, borderRadius: 24, padding: "28px 40px", marginTop: 24, border: "1px solid rgba(224,85,85,0.2)", boxShadow: "0 4px 24px rgba(224,85,85,0.04)" }}
+        >
           <h3 style={{ fontSize: 14, fontWeight: 700, color: "#e05555", marginBottom: 8, letterSpacing: "0.08em", textTransform: "uppercase" }}>Sign Out</h3>
           <p style={{ fontSize: 13, color: COLORS.navyMid, marginBottom: 16 }}>Sign out of your DentAI account on this device.</p>
-          <button onClick={logout} style={{ padding: "10px 24px", backgroundColor: "transparent", color: "#e05555", border: "1px solid rgba(224,85,85,0.4)", borderRadius: 999, fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit" }}>
+          <button
+            onClick={logout}
+            style={{ padding: "10px 24px", backgroundColor: "transparent", color: "#e05555", border: "1px solid rgba(224,85,85,0.4)", borderRadius: 999, fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit" }}
+          >
             Sign Out
           </button>
         </motion.div>
