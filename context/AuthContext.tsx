@@ -33,7 +33,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const storedUser = localStorage.getItem("user");
       if (storedToken && storedUser) {
         setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        const parsed = JSON.parse(storedUser);
+        setUser(parsed);
+
+        // Re-fetch fresh user data from /me to catch any missing fields (e.g. phone_number)
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/me`, {
+          headers: { Authorization: `Bearer ${storedToken}` },
+        })
+          .then((r) => r.json())
+          .then((fresh) => {
+            if (fresh?.id) {
+              const updated = { ...parsed, ...fresh };
+              setUser(updated);
+              localStorage.setItem("user", JSON.stringify(updated));
+            }
+          })
+          .catch(() => {});
       }
     } catch {
       localStorage.removeItem("token");

@@ -25,6 +25,7 @@ export default function BookPage() {
 
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [slots, setSlots] = useState<string[]>([]);
+  const [phoneNumber, setPhoneNumber] = useState(user?.phone_number || "");
   const [form, setForm] = useState({
     service: "",
     doctor_id: "",
@@ -39,6 +40,21 @@ export default function BookPage() {
   useEffect(() => {
     api.get("/doctors").then((res) => setDoctors(res.data)).catch(() => {});
   }, []);
+
+  // If phone_number wasn't in the login response, fetch it from /me
+  useEffect(() => {
+    if (!user?.phone_number) {
+      api.get("/me")
+        .then((res) => {
+          if (res.data?.phone_number) {
+            setPhoneNumber(res.data.phone_number);
+          }
+        })
+        .catch(() => {});
+    } else {
+      setPhoneNumber(user.phone_number);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!form.doctor_id || !form.date) return;
@@ -57,12 +73,16 @@ export default function BookPage() {
       setError("Please fill in all fields");
       return;
     }
+    if (!phoneNumber) {
+      setError("Your account has no phone number. Please update your profile first.");
+      return;
+    }
     setLoading(true);
     try {
       const datetime = new Date(`${form.date}T${form.time}:00`).toISOString();
       await api.post("/appointments", {
         patient_name: user?.full_name,
-        phone_number: user?.phone_number || "",
+        phone_number: phoneNumber,
         service: form.service,
         datetime,
         doctor_id: form.doctor_id,
@@ -193,6 +213,14 @@ export default function BookPage() {
           <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-600 space-y-1">
             <p><span className="font-medium">Name:</span> {user?.full_name}</p>
             <p><span className="font-medium">Email:</span> {user?.email}</p>
+            <p>
+              <span className="font-medium">Phone:</span>{" "}
+              {phoneNumber ? (
+                phoneNumber
+              ) : (
+                <span className="text-red-400">No phone number on file — please update your profile</span>
+              )}
+            </p>
           </div>
 
           <button
