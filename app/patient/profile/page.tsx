@@ -171,7 +171,7 @@ export default function ProfilePage() {
               <div style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: COLORS.green }} />
               <span style={{ color: COLORS.green, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>{user?.role}</span>
             </div>
-            <p style={{ color: COLORS.navyMid, fontSize: 13, marginTop: 8 }}>{user?.email}</p>
+            <p style={{color: COLORS.navyMid, fontSize: 16, marginTop: 8 }}>{user?.email}</p>
           </div>
         </motion.div>
 
@@ -190,8 +190,8 @@ export default function ProfilePage() {
                   flex: 1, padding: "18px 24px", fontSize: 12, fontWeight: 700,
                   letterSpacing: "0.12em", textTransform: "uppercase",
                   border: "none", cursor: "pointer", fontFamily: "inherit",
-                  backgroundColor: activeTab === tab.key ? COLORS.lightMint : COLORS.white,
-                  color: activeTab === tab.key ? COLORS.green : COLORS.navyMid,
+                  backgroundColor: activeTab === tab.key ? COLORS.navy : COLORS.white,
+                  color: activeTab === tab.key ? COLORS.white : COLORS.navyMid,
                   borderBottom: activeTab === tab.key ? `2px solid ${COLORS.green}` : "2px solid transparent",
                   transition: "all 0.2s",
                 }}
@@ -257,7 +257,7 @@ export default function ProfilePage() {
                   whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                   onClick={handleSaveInfo}
                   disabled={saving}
-                  style={{ padding: "14px 32px", backgroundColor: COLORS.green, color: "white", border: "none", borderRadius: 999, fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit", alignSelf: "flex-start", boxShadow: "0 8px 24px rgba(62,180,137,0.3)", opacity: saving ? 0.7 : 1 }}
+                  style={{ padding: "14px 32px", backgroundColor: COLORS.navy, color: "white", border: "none", borderRadius: 999, fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit", alignSelf: "flex-start", boxShadow: "0 8px 24px rgba(62,180,137,0.3)", opacity: saving ? 0.7 : 1 }}
                 >
                   {saving ? "Saving..." : "Save Changes"}
                 </motion.button>
@@ -309,7 +309,7 @@ export default function ProfilePage() {
           initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
           style={{ backgroundColor: COLORS.white, borderRadius: 24, padding: "28px 40px", marginTop: 24, border: "1px solid rgba(224,85,85,0.2)", boxShadow: "0 4px 24px rgba(224,85,85,0.04)" }}
         >
-          <h3 style={{ fontSize: 14, fontWeight: 700, color: "#e05555", marginBottom: 8, letterSpacing: "0.08em", textTransform: "uppercase" }}>Sign Out</h3>
+          
           <p style={{ fontSize: 13, color: COLORS.navyMid, marginBottom: 16 }}>Sign out of your DentAI account on this device.</p>
           <button
             onClick={logout}

@@ -358,29 +358,26 @@ export default function UploadPage() {
 
       <input ref={fileInputRef} type="file" accept="image/*,.pdf,.dcm" style={{ display: "none" }} onChange={handleFileChange} />
 
-      <div style={{ padding: "2rem 1.5rem 4rem" }}>
-
-        {/* ── TOP BAR (matches old upload style) ── */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2rem", flexWrap: "wrap", gap: "1rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-            <Link href="/patient/dashboard" className="nav-back" style={{ display: "flex", alignItems: "center", gap: 6, color: COLORS.navyMid, textDecoration: "none", fontSize: 13, fontWeight: 500, transition: "color 0.15s" }}>
-              {Icon.arrowLeft}
-              <span>Dashboard</span>
-            </Link>
-            <div style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 22, fontWeight: 700, color: COLORS.navy, letterSpacing: "-0.5px" }}>
-              Dent<span style={{ color: COLORS.green }}>AI</span>
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, flexWrap: "wrap" }}>
-            <span style={{ color: COLORS.green, fontWeight: 500 }}>Book</span>
-            <span style={{ color: COLORS.navyMid }}>›</span>
-            <span style={{ color: COLORS.green, fontWeight: 500 }}>Confirm</span>
-            <span style={{ color: COLORS.navyMid }}>›</span>
-            <span style={{ color: COLORS.navy, fontWeight: 600 }}>Upload Documents</span>
-            <span style={{ color: COLORS.navyMid }}>›</span>
-            <span style={{ color: COLORS.navyMid }}>Done</span>
+      {/* ── NAVBAR ── */}
+      <nav style={{ position: "sticky", top: 0, zIndex: 50, background: COLORS.white, borderBottom: `1px solid ${COLORS.border}`, padding: "0 2rem", height: 62, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
+          <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 30, height: 30, borderRadius: "50%", background: COLORS.green, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 900, color: "white", fontFamily: "'Josefin Sans', sans-serif" }}>D</div>
+            <span style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 14, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: COLORS.navy }}>DentAI</span>
+          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: COLORS.navyMid }}>
+            <span style={{ color: COLORS.green, fontWeight: 600 }}>Patient Portal</span>
+            <span style={{ opacity: 0.35 }}>›</span>
+            <span>Upload Documents</span>
           </div>
         </div>
+        <Link href="/patient/dashboard" className="nav-back" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: COLORS.navyMid, textDecoration: "none", fontWeight: 500, transition: "color 0.15s" }}>
+          {Icon.arrowLeft}
+          Dashboard
+        </Link>
+      </nav>
+
+      <div style={{ maxWidth: 1080, margin: "0 auto", padding: "2.5rem 1.5rem 5rem" }}>
 
         {/* Error */}
         {error && (
@@ -601,7 +598,7 @@ export default function UploadPage() {
                 </div>
 
                 {/* RIGHT COLUMN: sticky summary panel */}
-                <div style={{ position: "sticky", top: 24, display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div style={{ position: "sticky", top: 78, display: "flex", flexDirection: "column", gap: "1rem" }}>
 
                   {/* Summary card */}
                   <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, overflow: "hidden" }}>

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRef, useEffect, useState, useCallback } from "react";
 import useEmblaCarousel from "embla-carousel-react";
+import { useAuth } from "@/context/AuthContext";
 import "./globals.css";
 
 const COLORS = {
@@ -517,8 +518,13 @@ function DoctorCard({ doctor }: { doctor: typeof DOCTORS[0] }) {
 
 export default function LandingPage() {
   const router = useRouter();
+  const { user, logout } = useAuth();
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "start", dragFree: true });
   const [activeIndex, setActiveIndex] = useState(0);
+  const [avatarDropdown, setAvatarDropdown] = useState(false);
+  const [authDrawer, setAuthDrawer] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const avatarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!emblaApi) return;
@@ -527,8 +533,80 @@ export default function LandingPage() {
     return () => clearInterval(auto);
   }, [emblaApi]);
 
+  useEffect(() => {
+    const loadPhoto = () => {
+      const saved = localStorage.getItem("patient_photo");
+      if (saved) setPhotoUrl(saved);
+    };
+    loadPhoto();
+
+    const handleClick = (e: MouseEvent) => {
+      if (avatarRef.current && !avatarRef.current.contains(e.target as Node)) setAvatarDropdown(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const initials = user?.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "";
+
   return (
     <main style={{ fontFamily: "'Josefin Sans', sans-serif", backgroundColor: COLORS.white, color: COLORS.navy, overflowX: "hidden" }}>
+
+      {/* AUTH DRAWER — shown when not logged in and clicks profile icon */}
+      <AnimatePresence>
+        {authDrawer && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setAuthDrawer(false)}
+              style={{ position: "fixed", inset: 0, backgroundColor: "rgba(44,62,80,0.4)", zIndex: 200, backdropFilter: "blur(4px)" }}
+            />
+            <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 280 }}
+              style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: 360, backgroundColor: COLORS.white, zIndex: 201, boxShadow: "-20px 0 60px rgba(44,62,80,0.15)", display: "flex", flexDirection: "column" }}
+            >
+              {/* Drawer header */}
+              <div style={{ padding: "28px 32px", borderBottom: `1px solid ${COLORS.lightMint}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 30, height: 30, borderRadius: "50%", backgroundColor: COLORS.green, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 900, color: "white" }}>D</div>
+                  <span style={{ fontSize: 15, fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", color: COLORS.navy }}>DentAI</span>
+                </div>
+                <button onClick={() => setAuthDrawer(false)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 22, color: COLORS.navyMid, display: "flex", alignItems: "center" }}>×</button>
+              </div>
+
+              {/* Drawer body */}
+              <div style={{ flex: 1, padding: "40px 32px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <div style={{ width: 64, height: 64, borderRadius: "50%", backgroundColor: COLORS.lightMint, border: `2px solid ${COLORS.mint}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 28px", color: COLORS.navyMid }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </div>
+                <h2 style={{ fontSize: 24, fontWeight: 900, color: COLORS.navy, textAlign: "center", marginBottom: 8 }}>Welcome to DentAI</h2>
+                <p style={{ fontSize: 13, color: COLORS.navyMid, textAlign: "center", lineHeight: 1.7, marginBottom: 36 }}>Sign in or create an account to manage your appointments and dental records.</p>
+
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  onClick={() => { setAuthDrawer(false); router.push("/auth/login"); }}
+                  style={{ width: "100%", padding: "15px", backgroundColor: COLORS.green, color: "white", border: "none", borderRadius: 14, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 8px 24px rgba(62,180,137,0.3)", marginBottom: 12 }}
+                >Sign In</motion.button>
+
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  onClick={() => { setAuthDrawer(false); router.push("/auth/register"); }}
+                  style={{ width: "100%", padding: "15px", backgroundColor: COLORS.white, color: COLORS.navy, border: `1.5px solid ${COLORS.mint}`, borderRadius: 14, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit" }}
+                >Create Account</motion.button>
+
+                <div style={{ marginTop: 32, padding: "20px", backgroundColor: COLORS.lightMint, borderRadius: 14, border: `1px solid ${COLORS.mint}` }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.green, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>Why sign in?</div>
+                  {["Book & manage appointments", "Upload dental X-rays", "View your dental history", "24/7 AI receptionist access"].map((item) => (
+                    <div key={item} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                      <div style={{ width: 5, height: 5, borderRadius: "50%", backgroundColor: COLORS.green, flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, color: COLORS.navy }}>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* NAVBAR */}
       <motion.nav
@@ -539,16 +617,71 @@ export default function LandingPage() {
           <div style={{ width: 34, height: 34, borderRadius: "50%", backgroundColor: COLORS.green, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "white" }}>D</div>
           <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: "0.18em", textTransform: "uppercase", color: COLORS.navy }}>DentAI</span>
         </div>
-        <div style={{ display: "flex", gap: 36, fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: COLORS.navy,fontWeight: 700 }}>
+        <div style={{ display: "flex", gap: 36, fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: COLORS.navy, fontWeight: 700 }}>
           <a href="#services" style={{ color: "inherit", textDecoration: "none" }} className="nav-link">Services</a>
           <a href="#doctors" style={{ color: "inherit", textDecoration: "none" }} className="nav-link">Doctors</a>
           <a href="#about" style={{ color: "inherit", textDecoration: "none" }} className="nav-link">About</a>
           <a href="#contact" style={{ color: "inherit", textDecoration: "none" }} className="nav-link">Contact</a>
         </div>
-        <div style={{ display: "flex", gap: 10, fontWeight: 700 }}>
-          <button onClick={() => router.push("/auth/login")} style={{ padding: "9px 22px", fontSize: 11, letterSpacing: "0.13em", textTransform: "uppercase", color: COLORS.navy, border: "1px solid #A7E4D8", borderRadius: 999, background: "transparent", cursor: "pointer", fontFamily: "inherit" }} >Login</button>
-          <button onClick={() => router.push("/auth/register")} style={{ padding: "9px 22px", fontSize: 11, letterSpacing: "0.13em", textTransform: "uppercase", color: "white", backgroundColor: COLORS.green, border: "none", borderRadius: 999, cursor: "pointer", fontFamily: "inherit" }}>Register</button>
-        </div>
+
+        {/* Right side — auth state aware */}
+        {user ? (
+          // LOGGED IN — avatar dropdown
+          <div ref={avatarRef} style={{ position: "relative" }}>
+            <div onClick={() => setAvatarDropdown((p) => !p)}
+              style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: "6px 14px 6px 8px", borderRadius: 999, border: `1px solid ${COLORS.mint}`, backgroundColor: COLORS.lightMint }}
+            >
+              <div style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden", backgroundColor: COLORS.mint, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 900, color: COLORS.green }}>
+                {photoUrl ? <img src={photoUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initials}
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.navy, letterSpacing: "0.08em" }}>{user.full_name.split(" ")[0]}</span>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={COLORS.navyMid} strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+            </div>
+
+            <AnimatePresence>
+              {avatarDropdown && (
+                <motion.div initial={{ opacity: 0, y: -8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.96 }} transition={{ duration: 0.15 }}
+                  style={{ position: "absolute", right: 0, top: "calc(100% + 10px)", backgroundColor: COLORS.white, borderRadius: 16, border: `1px solid ${COLORS.mint}`, boxShadow: "0 12px 40px rgba(44,62,80,0.12)", minWidth: 190, overflow: "hidden", zIndex: 200 }}
+                >
+                  <div style={{ padding: "14px 18px", borderBottom: `1px solid ${COLORS.lightMint}` }}>
+                    <div style={{ fontSize: 13, fontWeight: 900, color: COLORS.navy }}>{user.full_name}</div>
+                    <div style={{ fontSize: 11, color: COLORS.navyMid, marginTop: 2 }}>{user.email}</div>
+                  </div>
+                  {[
+                    { label: "Dashboard", action: () => { router.push("/patient/dashboard"); setAvatarDropdown(false); } },
+                    { label: "Profile", action: () => { router.push("/patient/profile"); setAvatarDropdown(false); } },
+                  ].map((item) => (
+                    <button key={item.label} onClick={item.action}
+                      style={{ width: "100%", padding: "12px 18px", textAlign: "left", background: "none", border: "none", fontSize: 12, fontWeight: 700, color: COLORS.navy, letterSpacing: "0.08em", cursor: "pointer", fontFamily: "inherit" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = COLORS.lightMint)}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                    >{item.label}</button>
+                  ))}
+                  <div style={{ height: 1, backgroundColor: COLORS.lightMint }} />
+                  <button onClick={() => { logout(); setAvatarDropdown(false); }}
+                    style={{ width: "100%", padding: "12px 18px", textAlign: "left", background: "none", border: "none", fontSize: 12, fontWeight: 700, color: "#e05555", letterSpacing: "0.08em", cursor: "pointer", fontFamily: "inherit" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(224,85,85,0.06)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                  >Sign Out</button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        ) : (
+          // NOT LOGGED IN — login/register + ghost profile icon
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <button onClick={() => setAuthDrawer(true)}
+              style={{ width: 38, height: 38, borderRadius: "50%", border: `1px solid ${COLORS.mint}`, backgroundColor: COLORS.lightMint, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.navyMid }}
+              title="Sign in to access your account"
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </button>
+            <button onClick={() => router.push("/auth/login")} style={{ padding: "9px 22px", fontSize: 11, letterSpacing: "0.13em", textTransform: "uppercase", color: COLORS.navy, border: "1px solid #A7E4D8", borderRadius: 999, background: "transparent", cursor: "pointer", fontFamily: "inherit", fontWeight: 700 }}>Login</button>
+            <button onClick={() => router.push("/auth/register")} style={{ padding: "9px 22px", fontSize: 11, letterSpacing: "0.13em", textTransform: "uppercase", color: "white", backgroundColor: COLORS.green, border: "none", borderRadius: 999, cursor: "pointer", fontFamily: "inherit", fontWeight: 700 }}>Register</button>
+          </div>
+        )}
       </motion.nav>
 
       {/* HERO */}
@@ -573,7 +706,7 @@ export default function LandingPage() {
           </motion.p>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1 }} style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-            <button onClick={() => router.push("/auth/register")} style={{ padding: "16px 36px", backgroundColor: COLORS.green, color: "white", fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 12px 32px rgba(62,180,137,0.35)" }}>
+            <button onClick={() => router.push("/patient/book")} style={{ padding: "16px 36px", backgroundColor: COLORS.green, color: "white", fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 12px 32px rgba(62,180,137,0.35)" }}>
               Book Appointment
             </button>
             <a href="tel:+15186346766" style={{ padding: "16px 36px", border: "1px solid #A7E4D8", color: COLORS.navy, fontSize: 12, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", borderRadius: 999, textDecoration: "none", display: "inline-block" }}>

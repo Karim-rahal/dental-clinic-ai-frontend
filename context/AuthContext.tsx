@@ -28,13 +28,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    try {
-      const storedToken = localStorage.getItem("token");
-      const storedUser = localStorage.getItem("user");
-      if (storedToken && storedUser) {
-        setToken(storedToken);
-        const parsed = JSON.parse(storedUser);
-        setUser(parsed);
+    const init = () => {
+      try {
+        const storedToken = localStorage.getItem("token");
+        const storedUser = localStorage.getItem("user");
+        if (storedToken && storedUser) {
+          setToken(storedToken);
+          const parsed = JSON.parse(storedUser);
+          setUser(parsed);
 
         // Re-fetch fresh user data from /me to catch any missing fields (e.g. phone_number)
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/me`, {
@@ -50,14 +51,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           })
           .catch(() => {});
       }
-    } catch {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-    } finally {
-      setIsLoading(false);
-    }
+    }  catch {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    init();
   }, []);
-
+    
   const login = (token: string, user: User) => {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
@@ -68,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (user.role === "admin") router.push("/admin/dashboard");
     else if (user.role === "doctor") router.push("/doctor/dashboard");
-    else router.push("/patient/dashboard");
+    else router.push("/");
   };
 
   const logout = () => {
