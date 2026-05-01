@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import axios from "axios";
 
@@ -100,11 +101,14 @@ function FieldError({ msg }: { msg: string }) {
 // Page
 // ─────────────────────────────────────────────
 
-export default function PatientProfilePage() {
+export default function DoctorProfilePage() {
   const { user, logout } = useAuth();
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<"info" | "password">("info");
+  const [photoUrl, setPhotoUrl] = useState<string | null>(
+    typeof window !== "undefined" ? localStorage.getItem("doctor_photo") : null
+  );
 
   // Info form
   const [infoForm, setInfoForm] = useState({
@@ -124,6 +128,18 @@ export default function PatientProfilePage() {
   const [pwError, setPwError]     = useState("");
 
   const getInitials = (name: string) => name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const url = ev.target?.result as string;
+      setPhotoUrl(url);
+      localStorage.setItem("doctor_photo", url);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // ── Save info ──
   const handleInfoSave = async () => {
@@ -200,7 +216,7 @@ export default function PatientProfilePage() {
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: COLORS.offWhite }}>
         <div style={{ textAlign: "center" }}>
           <h2 style={{ color: COLORS.navy, fontFamily: "'Josefin Sans', sans-serif" }}>Access Restricted</h2>
-          <button onClick={() => router.push("/auth/login")} style={{ color: COLORS.green, background: "none", border: "none", cursor: "pointer", fontSize: 14 }}>Sign in</button>
+          <Link href="/auth/login" style={{ color: COLORS.green }}>Sign in</Link>
         </div>
       </div>
     );
@@ -217,9 +233,9 @@ export default function PatientProfilePage() {
       {/* Navbar */}
       <nav style={{ position: "sticky", top: 0, zIndex: 50, background: COLORS.white, borderBottom: `1px solid ${COLORS.border}`, padding: "0 2rem", height: 62, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-          <button onClick={() => router.push("/patient/dashboard")} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: COLORS.navyMid, background: "none", border: "none", cursor: "pointer", fontWeight: 500, fontFamily: "'Josefin Sans', sans-serif" }}>
+          <Link href="/doctor/dashboard" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: COLORS.navyMid, textDecoration: "none", fontWeight: 500, fontFamily: "'Josefin Sans', sans-serif" }}>
             <ArrowLeftIcon /> Dashboard
-          </button>
+          </Link>
           <div style={{ width: 1, height: 20, background: COLORS.border }} />
           <h1 style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 16, fontWeight: 700, color: COLORS.navy }}>My Profile</h1>
         </div>
@@ -230,24 +246,37 @@ export default function PatientProfilePage() {
 
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "2.5rem 1.5rem 5rem" }}>
 
-        {/* Profile header card — navy, same as doctor */}
+        {/* Profile header card — navy, unchanged */}
         <div style={{ background: COLORS.navy, borderRadius: 20, padding: "2rem", marginBottom: "2rem", display: "flex", alignItems: "center", gap: "1.5rem", animation: "fadeUp 0.3s ease", position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", background: COLORS.green, opacity: 0.08, right: -60, top: -60, pointerEvents: "none" }} />
-          <div style={{ width: 72, height: 72, borderRadius: "50%", background: COLORS.green, display: "flex", alignItems: "center", justifyContent: "center", border: "3px solid rgba(255,255,255,0.15)", boxShadow: "0 8px 24px rgba(0,0,0,0.2)", flexShrink: 0 }}>
-            <span style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 24, fontWeight: 900, color: "white" }}>{getInitials(user.full_name || "P")}</span>
+          <div style={{ position: "relative" }}>
+            <div style={{ width: 72, height: 72, borderRadius: "50%", background: COLORS.green, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", border: "3px solid rgba(255,255,255,0.15)", boxShadow: "0 8px 24px rgba(0,0,0,0.2)" }}>
+              {photoUrl
+                ? <img src={photoUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : <span style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 24, fontWeight: 900, color: "white" }}>{getInitials(user.full_name || "Dr")}</span>
+              }
+            </div>
+            <label style={{ position: "absolute", bottom: -2, right: -2, width: 22, height: 22, borderRadius: "50%", background: COLORS.green, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", border: "2px solid white", fontSize: 11 }}>
+              +
+              <input type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhotoUpload} />
+            </label>
           </div>
           <div style={{ flex: 1, zIndex: 1 }}>
             <p style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 22, fontWeight: 900, color: "white", marginBottom: 4 }}>{user.full_name}</p>
-            <p style={{ fontSize: 13, color: COLORS.mint, marginBottom: 4 }}>Patient · DentAI Clinic</p>
+            <p style={{ fontSize: 13, color: COLORS.mint, marginBottom: 4 }}>Doctor · DentAI Clinic</p>
             <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)" }}>{user.email}</p>
           </div>
+          {photoUrl && (
+            <button onClick={() => { setPhotoUrl(null); localStorage.removeItem("doctor_photo"); }}
+              style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", background: "none", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", zIndex: 1 }}
+            >Remove photo</button>
+          )}
         </div>
 
         {/* Tabs */}
         <div style={{ display: "flex", gap: 6, marginBottom: "1.5rem", background: COLORS.white, padding: 6, borderRadius: 14, border: `1px solid ${COLORS.border}` }}>
           {(["info", "password"] as const).map((tab) => (
-            <button key={tab}
-              onClick={() => { setActiveTab(tab); setInfoError(""); setInfoSuccess(""); setPwError(""); setPwSuccess(""); }}
+            <button key={tab} onClick={() => { setActiveTab(tab); setInfoError(""); setInfoSuccess(""); setPwError(""); setPwSuccess(""); }}
               style={{ flex: 1, padding: "11px 16px", borderRadius: 10, border: "none", background: activeTab === tab ? COLORS.navy : "transparent", color: activeTab === tab ? "white" : COLORS.navyMid, fontFamily: "'Josefin Sans', sans-serif", fontSize: 13, fontWeight: 700, cursor: "pointer", letterSpacing: "0.04em", transition: "all 0.15s" }}
             >
               {tab === "info" ? "Personal Info" : "Change Password"}
@@ -272,7 +301,7 @@ export default function PatientProfilePage() {
                   type="text"
                   value={infoForm.full_name}
                   onChange={(e) => { setInfoForm((f) => ({ ...f, full_name: e.target.value })); setInfoFieldErrors((fe) => ({ ...fe, full_name: validateName(e.target.value) })); }}
-                  placeholder="Your full name"
+                  placeholder="Dr. John Smith"
                   style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `1px solid ${infoFieldErrors.full_name ? "#FECACA" : COLORS.border}`, background: infoFieldErrors.full_name ? "#FEF2F2" : COLORS.offWhite, fontSize: 14, color: COLORS.navy, fontFamily: "'DM Sans', sans-serif", outline: "none" }}
                   onFocus={(e) => (e.target.style.borderColor = infoFieldErrors.full_name ? "#DC2626" : COLORS.green)}
                   onBlur={(e) => (e.target.style.borderColor = infoFieldErrors.full_name ? "#FECACA" : COLORS.border)}
@@ -280,7 +309,7 @@ export default function PatientProfilePage() {
                 <FieldError msg={infoFieldErrors.full_name} />
               </div>
 
-              {/* Email — read only */}
+              {/* Email — read only, cannot be changed */}
               <div>
                 <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: COLORS.navy, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "'Josefin Sans', sans-serif", marginBottom: 8 }}>Email Address</label>
                 <input
@@ -292,14 +321,14 @@ export default function PatientProfilePage() {
                 <p style={{ fontSize: 11, color: COLORS.navyMid, marginTop: 5 }}>Email address cannot be changed.</p>
               </div>
 
-              {/* Phone */}
+              {/* Phone Number */}
               <div>
                 <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: COLORS.navy, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "'Josefin Sans', sans-serif", marginBottom: 8 }}>Phone Number</label>
                 <input
                   type="tel"
                   value={infoForm.phone_number}
                   onChange={(e) => { setInfoForm((f) => ({ ...f, phone_number: e.target.value })); setInfoFieldErrors((fe) => ({ ...fe, phone_number: validatePhone(e.target.value) })); }}
-                  placeholder="+961 70 000 000"
+                  placeholder="+961 XX XXX XXX"
                   style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `1px solid ${infoFieldErrors.phone_number ? "#FECACA" : COLORS.border}`, background: infoFieldErrors.phone_number ? "#FEF2F2" : COLORS.offWhite, fontSize: 14, color: COLORS.navy, fontFamily: "'DM Sans', sans-serif", outline: "none" }}
                   onFocus={(e) => (e.target.style.borderColor = infoFieldErrors.phone_number ? "#DC2626" : COLORS.green)}
                   onBlur={(e) => (e.target.style.borderColor = infoFieldErrors.phone_number ? "#FECACA" : COLORS.border)}
@@ -310,7 +339,7 @@ export default function PatientProfilePage() {
               <button onClick={handleInfoSave} disabled={infoLoading}
                 style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", background: infoLoading ? COLORS.navyLight : COLORS.navy, color: infoLoading ? COLORS.navyMid : "white", borderRadius: 10, border: "none", cursor: infoLoading ? "not-allowed" : "pointer", fontFamily: "'Josefin Sans', sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "0.05em", marginTop: 4, transition: "background 0.15s" }}
               >
-                 {infoLoading ? "Saving…" : "Save Changes"}
+                {infoLoading ? "Saving…" : "Save Changes"}
               </button>
             </div>
           </div>
@@ -346,6 +375,7 @@ export default function PatientProfilePage() {
                   placeholder="Min. 6 characters"
                 />
                 <FieldError msg={pwFieldErrors.new_password} />
+                {/* Strength bar */}
                 {pwForm.new_password.length > 0 && (
                   <div style={{ marginTop: 8 }}>
                     <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>

@@ -163,26 +163,28 @@ export default function BookPage() {
   }, []);
 
   useEffect(() => {
+  setTimeout(() => {
     if (!user?.phone_number) {
       api.get("/me").then((res) => { if (res.data?.phone_number) setPhoneNumber(res.data.phone_number); }).catch(() => {});
     } else {
       setPhoneNumber(user.phone_number);
     }
-  }, [user]);
+  }, 0);
+}, [user]);
 
-  useEffect(() => {
-    if (!form.doctor_id || !form.date) return;
+useEffect(() => {
+  if (!form.doctor_id || !form.date) return;
+  setTimeout(() => {
     setSlotsLoading(true);
     setSlots([]);
-    api
-      .get(`/doctors/${form.doctor_id}/slots?date=${form.date}`)
-      .then((res) => setSlots(res.data.slots || []))
-      .catch(() => setSlots([]))
-      .finally(() => setSlotsLoading(false));
-  }, [form.doctor_id, form.date]);
-
-  const today = new Date().toISOString().split("T")[0];
-
+  }, 0);
+  api
+    .get(`/doctors/${form.doctor_id}/slots?date=${form.date}`)
+    .then((res) => setSlots(res.data.slots || []))
+    .catch(() => setSlots([]))
+    .finally(() => setSlotsLoading(false));
+}, [form.doctor_id, form.date]);
+const today = new Date().toISOString().split("T")[0];
   const selectedService = SERVICES.find((s) => s.id === form.service);
   const selectedDoctor  = doctors.find((d) => d.id === form.doctor_id);
 
