@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
@@ -122,7 +122,6 @@ function ServiceIllustration({ service }: { service: string }) {
       </svg>
     );
   }
-  // Default: Dental Checkup
   return (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
       <rect width="64" height="64" rx="16" fill={s.bg} />
@@ -235,10 +234,10 @@ function computeStatus(apptId: number, service: string, uploaded: UploadMap): "p
 }
 
 // ─────────────────────────────────────────────
-// Page Component
+// Inner component (uses useSearchParams)
 // ─────────────────────────────────────────────
 
-export default function UploadPage() {
+function UploadPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const appointmentIdParam = searchParams.get("appointmentId");
@@ -315,8 +314,6 @@ export default function UploadPage() {
     if (!selectedAppt || !allRequiredDone) return;
     setSubmitting(true);
     try {
-      // TODO: swap for real API when backend is ready
-      // await api.post(`/appointments/${selectedAppt.id}/documents/submit`, formData);
       await new Promise((r) => setTimeout(r, 900));
       setSubmitSuccess(true);
       setAppointments((prev) =>
@@ -360,7 +357,7 @@ export default function UploadPage() {
 
       <div style={{ padding: "2rem 1.5rem 4rem" }}>
 
-        {/* ── TOP BAR (matches old upload style) ── */}
+        {/* TOP BAR */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2rem", flexWrap: "wrap", gap: "1rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
             <Link href="/patient/dashboard" className="nav-back" style={{ display: "flex", alignItems: "center", gap: 6, color: COLORS.navyMid, textDecoration: "none", fontSize: 13, fontWeight: 500, transition: "color 0.15s" }}>
@@ -382,7 +379,6 @@ export default function UploadPage() {
           </div>
         </div>
 
-        {/* Error */}
         {error && (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#FEECEC", border: "1px solid #F5C4C4", borderRadius: 10, padding: "12px 16px", marginBottom: "1.5rem", fontSize: 13, color: "#A32D2D" }}>
             <span>{error}</span>
@@ -390,7 +386,7 @@ export default function UploadPage() {
           </div>
         )}
 
-        {/* ── HERO ── */}
+        {/* HERO */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "1.5rem", marginBottom: "2.5rem", animation: "fadeUp 0.4s ease" }}>
           <div>
             <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: COLORS.green, fontFamily: "'Josefin Sans', sans-serif", marginBottom: 10 }}>
@@ -404,8 +400,6 @@ export default function UploadPage() {
               doctor can prepare a personalised care plan before your visit.
             </p>
           </div>
-
-          {/* Trust badges */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 4 }}>
             {[
               { icon: Icon.shield,      text: "End-to-end encrypted" },
@@ -420,7 +414,6 @@ export default function UploadPage() {
           </div>
         </div>
 
-        {/* ── NO APPOINTMENTS ── */}
         {appointments.length === 0 ? (
           <div style={{ textAlign: "center", padding: "4rem 0" }}>
             <p style={{ fontSize: 15, color: COLORS.navyMid, marginBottom: 20 }}>No upcoming appointments found.</p>
@@ -430,7 +423,7 @@ export default function UploadPage() {
           </div>
         ) : (
           <>
-            {/* ── APPOINTMENT TABS ── */}
+            {/* APPOINTMENT TABS */}
             <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6, marginBottom: "2rem", scrollbarWidth: "none" }}>
               {appointments.map((appt) => {
                 const status = computeStatus(appt.id, appt.service, uploaded);
@@ -452,7 +445,6 @@ export default function UploadPage() {
                     }}
                   >
                     {isSelected && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: m.accent, borderRadius: "14px 14px 0 0" }} />}
-
                     <div style={{ marginBottom: 8 }}>
                       <span style={{
                         fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
@@ -475,14 +467,14 @@ export default function UploadPage() {
               })}
             </div>
 
-            {/* ── MAIN TWO-COLUMN LAYOUT ── */}
+            {/* MAIN LAYOUT */}
             {selectedAppt && (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 290px", gap: "1.5rem", alignItems: "start" }}>
 
                 {/* LEFT COLUMN */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
 
-                  {/* Service banner card */}
+                  {/* Service banner */}
                   <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: "1.5rem", display: "flex", alignItems: "center", gap: "1.25rem", animation: "fadeUp 0.3s ease" }}>
                     <ServiceIllustration service={selectedAppt.service} />
                     <div style={{ flex: 1 }}>
@@ -496,17 +488,13 @@ export default function UploadPage() {
                         {getDoctorName(selectedAppt)} · {getFormattedDate(selectedAppt)}
                       </p>
                     </div>
-                    {/* Circular progress */}
                     <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
                       <svg width="58" height="58" viewBox="0 0 58 58">
                         <circle cx="29" cy="29" r="23" fill="none" stroke={COLORS.navyLight} strokeWidth="5" />
-                        <circle
-                          cx="29" cy="29" r="23" fill="none"
-                          stroke={meta?.accent ?? COLORS.green} strokeWidth="5"
+                        <circle cx="29" cy="29" r="23" fill="none" stroke={meta?.accent ?? COLORS.green} strokeWidth="5"
                           strokeDasharray={`${2 * Math.PI * 23}`}
                           strokeDashoffset={`${2 * Math.PI * 23 * (1 - pct / 100)}`}
-                          strokeLinecap="round"
-                          transform="rotate(-90 29 29)"
+                          strokeLinecap="round" transform="rotate(-90 29 29)"
                           style={{ transition: "stroke-dashoffset 0.5s ease" }}
                         />
                         <text x="29" y="34" textAnchor="middle" fontSize="12" fontWeight="700" fill={COLORS.navy} fontFamily="'Josefin Sans', sans-serif">{pct}%</text>
@@ -518,48 +506,31 @@ export default function UploadPage() {
                   {/* Document sections */}
                   {sections.length === 0 ? (
                     <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: "3rem", textAlign: "center" }}>
-                      <p style={{ color: COLORS.navyMid, fontSize: 14 }}>No documents required for this service. Your doctor will prepare everything on the day.</p>
+                      <p style={{ color: COLORS.navyMid, fontSize: 14 }}>No documents required for this service.</p>
                     </div>
                   ) : sections.map((section, si) => (
                     <div key={section.section} style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, overflow: "hidden", animation: `fadeUp ${0.3 + si * 0.08}s ease` }}>
-
-                      {/* Section header */}
                       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "1rem 1.25rem", borderBottom: `1px solid ${COLORS.border}`, background: section.required ? `${section.color}55` : COLORS.offWhite }}>
                         <div style={{ width: 36, height: 36, borderRadius: 10, background: section.color, color: section.iconColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                           {section.iconType === "xray" ? Icon.xray : section.iconType === "photo" ? Icon.photo : Icon.doc}
                         </div>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 11, fontWeight: 700, color: COLORS.navy, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 2 }}>
-                            {section.section}
-                          </div>
+                          <div style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 11, fontWeight: 700, color: COLORS.navy, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 2 }}>{section.section}</div>
                           <div style={{ fontSize: 11, color: COLORS.navyMid }}>{section.desc}</div>
                         </div>
                         <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 20, textTransform: "uppercase", letterSpacing: "0.4px", background: section.required ? "#FEECEC" : COLORS.lightMint, color: section.required ? "#A32D2D" : "#0F6E56", flexShrink: 0 }}>
                           {section.required ? "Required" : "Optional"}
                         </span>
                       </div>
-
-                      {/* Document item rows */}
                       <div style={{ padding: "0.75rem 1rem", display: "flex", flexDirection: "column", gap: 6 }}>
                         {section.items.map((item) => {
                           const key = `${selectedId}_${item.id}`;
                           const file = uploaded[key];
                           const isUploaded = !!file;
                           return (
-                            <div
-                              key={item.id}
-                              className="doc-row"
-                              onClick={() => !isUploaded && triggerUpload(key)}
-                              style={{
-                                display: "flex", alignItems: "center", gap: 12,
-                                padding: "10px 12px", borderRadius: 10,
-                                border: `1px ${isUploaded ? "solid" : "dashed"} ${isUploaded ? COLORS.green : COLORS.border}`,
-                                background: isUploaded ? COLORS.lightMint : "transparent",
-                                cursor: isUploaded ? "default" : "pointer",
-                                transition: "all 0.12s",
-                              }}
+                            <div key={item.id} className="doc-row" onClick={() => !isUploaded && triggerUpload(key)}
+                              style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, border: `1px ${isUploaded ? "solid" : "dashed"} ${isUploaded ? COLORS.green : COLORS.border}`, background: isUploaded ? COLORS.lightMint : "transparent", cursor: isUploaded ? "default" : "pointer", transition: "all 0.12s" }}
                             >
-                              {/* Thumb */}
                               <div style={{ width: 36, height: 36, borderRadius: 8, flexShrink: 0, background: isUploaded ? (file.preview ? "transparent" : COLORS.lightMint) : COLORS.navyLight, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                                 {isUploaded && file.preview ? (
                                   // eslint-disable-next-line @next/next/no-img-element
@@ -570,22 +541,14 @@ export default function UploadPage() {
                                   <span style={{ color: COLORS.navyMid, opacity: 0.4 }}>{Icon.doc}</span>
                                 )}
                               </div>
-
-                              {/* Info */}
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontSize: 13, fontWeight: 500, color: COLORS.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.label}</div>
                                 <div style={{ fontSize: 11, color: COLORS.navyMid, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{isUploaded ? file.name : item.hint}</div>
                               </div>
-
-                              {/* Action buttons */}
                               {isUploaded ? (
                                 <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                                  <button className="icon-btn" onClick={(e) => { e.stopPropagation(); triggerUpload(key); }} style={{ fontSize: 11, fontWeight: 500, padding: "4px 10px", borderRadius: 20, border: `1px solid ${COLORS.green}`, background: "transparent", cursor: "pointer", color: COLORS.green, fontFamily: "inherit", transition: "all 0.12s" }}>
-                                    Replace
-                                  </button>
-                                  <button onClick={(e) => { e.stopPropagation(); removeFile(key); }} style={{ fontSize: 11, padding: "4px 8px", borderRadius: 20, border: `1px solid ${COLORS.border}`, background: "transparent", cursor: "pointer", color: COLORS.navyMid, fontFamily: "inherit" }}>
-                                    ✕
-                                  </button>
+                                  <button className="icon-btn" onClick={(e) => { e.stopPropagation(); triggerUpload(key); }} style={{ fontSize: 11, fontWeight: 500, padding: "4px 10px", borderRadius: 20, border: `1px solid ${COLORS.green}`, background: "transparent", cursor: "pointer", color: COLORS.green, fontFamily: "inherit", transition: "all 0.12s" }}>Replace</button>
+                                  <button onClick={(e) => { e.stopPropagation(); removeFile(key); }} style={{ fontSize: 11, padding: "4px 8px", borderRadius: 20, border: `1px solid ${COLORS.border}`, background: "transparent", cursor: "pointer", color: COLORS.navyMid, fontFamily: "inherit" }}>✕</button>
                                 </div>
                               ) : (
                                 <button className="icon-btn" onClick={(e) => { e.stopPropagation(); triggerUpload(key); }} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 500, padding: "5px 12px", borderRadius: 20, border: `1px solid ${COLORS.border}`, background: "transparent", cursor: "pointer", color: COLORS.navyMid, fontFamily: "inherit", transition: "all 0.12s", flexShrink: 0 }}>
@@ -600,17 +563,13 @@ export default function UploadPage() {
                   ))}
                 </div>
 
-                {/* RIGHT COLUMN: sticky summary panel */}
+                {/* RIGHT COLUMN */}
                 <div style={{ position: "sticky", top: 24, display: "flex", flexDirection: "column", gap: "1rem" }}>
-
-                  {/* Summary card */}
                   <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, overflow: "hidden" }}>
                     <div style={{ padding: "1.1rem 1.25rem", borderBottom: `1px solid ${COLORS.border}`, background: meta?.bg ?? COLORS.lightMint }}>
                       <p style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.14em", color: meta?.accent ?? COLORS.green, marginBottom: 4 }}>Upload Summary</p>
                       <p style={{ fontSize: 13, color: COLORS.navy, fontWeight: 600 }}>{selectedAppt.service}</p>
                     </div>
-
-                    {/* Checklist */}
                     <div style={{ padding: "1rem 1.25rem", display: "flex", flexDirection: "column", gap: 10 }}>
                       {sections.map((section) => {
                         const done = section.items.filter((item) => !!uploaded[`${selectedId}_${item.id}`]).length;
@@ -628,90 +587,68 @@ export default function UploadPage() {
                         );
                       })}
                     </div>
-
-                    {/* Progress bar */}
                     <div style={{ padding: "0 1.25rem 1.1rem" }}>
                       <div style={{ background: COLORS.navyLight, borderRadius: 20, height: 5, overflow: "hidden" }}>
                         <div style={{ height: "100%", width: `${pct}%`, background: meta?.accent ?? COLORS.green, borderRadius: 20, transition: "width 0.4s ease" }} />
                       </div>
                       <p style={{ fontSize: 11, color: COLORS.navyMid, marginTop: 6 }}>{uploadedCount} of {totalCount} documents uploaded</p>
                     </div>
-
-                    {/* Action area */}
                     <div style={{ padding: "0 1.25rem 1.25rem", display: "flex", flexDirection: "column", gap: 8 }}>
                       {!allRequiredDone && requiredItems.length > 0 && (
                         <div style={{ background: "#FEF6E4", border: "1px solid #FAC775", borderRadius: 8, padding: "9px 12px", fontSize: 11, color: "#854F0B", lineHeight: 1.55 }}>
                           {requiredItems.filter((i) => !uploaded[`${selectedId}_${i.id}`]).length} required file(s) still needed.
                         </div>
                       )}
-
                       {submitSuccess ? (
                         <div style={{ background: COLORS.lightMint, border: `1px solid ${COLORS.mint}`, borderRadius: 10, padding: "12px 14px", fontSize: 13, color: "#0F6E56", lineHeight: 1.6 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, marginBottom: 4 }}>
-                            {Icon.check} Submitted successfully
-                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 600, marginBottom: 4 }}>{Icon.check} Submitted successfully</div>
                           {getDoctorName(selectedAppt)} will review your documents before your appointment.
                         </div>
                       ) : (
-                        <button
-                          className="submit-btn"
-                          disabled={!allRequiredDone || submitting}
-                          onClick={handleSubmit}
-                          style={{
-                            width: "100%",
-                            fontFamily: "'Josefin Sans', sans-serif",
-                            fontSize: 13, fontWeight: 700, letterSpacing: "0.05em",
-                            padding: "13px 0",
-                            background: allRequiredDone && !submitting ? COLORS.navy : COLORS.navyLight,
-                            color: allRequiredDone && !submitting ? "white" : COLORS.navyMid,
-                            border: "none", borderRadius: 10,
-                            cursor: allRequiredDone && !submitting ? "pointer" : "not-allowed",
-                            transition: "background 0.15s",
-                          }}
-                        >
+                        <button className="submit-btn" disabled={!allRequiredDone || submitting} onClick={handleSubmit}
+                          style={{ width: "100%", fontFamily: "'Josefin Sans', sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "0.05em", padding: "13px 0", background: allRequiredDone && !submitting ? COLORS.navy : COLORS.navyLight, color: allRequiredDone && !submitting ? "white" : COLORS.navyMid, border: "none", borderRadius: 10, cursor: allRequiredDone && !submitting ? "pointer" : "not-allowed", transition: "background 0.15s" }}>
                           {submitting ? "Submitting…" : allRequiredDone ? "Submit for Review" : "Upload required files first"}
                         </button>
                       )}
-
                       {submitSuccess && (
-                        <button
-                          onClick={() => router.push("/patient/dashboard")}
-                          style={{ width: "100%", fontFamily: "'Josefin Sans', sans-serif", fontSize: 13, fontWeight: 700, padding: "12px 0", background: COLORS.green, color: "white", border: "none", borderRadius: 10, cursor: "pointer" }}
-                        >
+                        <button onClick={() => router.push("/patient/dashboard")} style={{ width: "100%", fontFamily: "'Josefin Sans', sans-serif", fontSize: 13, fontWeight: 700, padding: "12px 0", background: COLORS.green, color: "white", border: "none", borderRadius: 10, cursor: "pointer" }}>
                           Go to Dashboard
                         </button>
                       )}
-
-                      <p style={{ fontSize: 11, color: COLORS.navyMid, textAlign: "center", lineHeight: 1.6 }}>
-                        You can replace or add files at any time from your dashboard.
-                      </p>
+                      <p style={{ fontSize: 11, color: COLORS.navyMid, textAlign: "center", lineHeight: 1.6 }}>You can replace or add files at any time from your dashboard.</p>
                     </div>
                   </div>
 
-                  {/* Tip card */}
                   <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: "1rem 1.25rem" }}>
-                    <p style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: COLORS.green, marginBottom: 8 }}>
-                      Tips for better results
-                    </p>
-                    {[
-                      "Ensure X-rays are clear and fully in-frame",
-                      "Photos should be taken in good natural lighting",
-                      "DICOM files are preferred over printed scans",
-                      "Label files clearly before uploading",
-                    ].map((tip, i) => (
+                    <p style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: COLORS.green, marginBottom: 8 }}>Tips for better results</p>
+                    {["Ensure X-rays are clear and fully in-frame", "Photos should be taken in good natural lighting", "DICOM files are preferred over printed scans", "Label files clearly before uploading"].map((tip, i) => (
                       <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 6, fontSize: 12, color: COLORS.navyMid, lineHeight: 1.5 }}>
-                        <span style={{ color: COLORS.green, marginTop: 2, flexShrink: 0 }}>{Icon.check}</span>
-                        {tip}
+                        <span style={{ color: COLORS.green, marginTop: 2, flexShrink: 0 }}>{Icon.check}</span>{tip}
                       </div>
                     ))}
                   </div>
                 </div>
-
               </div>
             )}
           </>
         )}
       </div>
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// Default export with Suspense boundary
+// ─────────────────────────────────────────────
+
+export default function UploadPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F7F9F8" }}>
+        <div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid #E6F7F2", borderTopColor: "#3EB489", animation: "spin 0.7s linear infinite" }} />
+      </div>
+    }>
+      <UploadPageContent />
+    </Suspense>
   );
 }

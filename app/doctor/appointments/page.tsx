@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -87,10 +87,10 @@ function getInitials(name: string) {
 }
 
 // ─────────────────────────────────────────────
-// Page
+// Inner component (uses useSearchParams)
 // ─────────────────────────────────────────────
 
-export default function DoctorAppointmentsPage() {
+function DoctorAppointmentsContent() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -192,7 +192,6 @@ export default function DoctorAppointmentsPage() {
 
         {/* Search + Filters */}
         <div style={{ display: "flex", gap: 12, marginBottom: "1.5rem", flexWrap: "wrap", animation: "fadeUp 0.35s ease" }}>
-          {/* Search */}
           <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
             <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: COLORS.navyMid }}><SearchIcon /></span>
             <input
@@ -204,7 +203,6 @@ export default function DoctorAppointmentsPage() {
             />
           </div>
 
-          {/* Filter tabs */}
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {FILTERS.map((f) => (
               <button
@@ -242,7 +240,6 @@ export default function DoctorAppointmentsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 10, animation: "fadeUp 0.4s ease" }}>
             {filtered.map((appt, i) => {
               const st = STATUS_STYLES[appt.status] || STATUS_STYLES.pending;
-              const isPast = new Date(appt.datetime) < new Date();
               const canAct = appt.status !== "completed" && appt.status !== "cancelled";
 
               return (
@@ -250,15 +247,12 @@ export default function DoctorAppointmentsPage() {
                   key={appt.id}
                   style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: "1rem 1.25rem", display: "flex", alignItems: "center", gap: 14, animation: `fadeUp ${0.05 + i * 0.04}s ease`, position: "relative", overflow: "hidden" }}
                 >
-                  {/* Left accent bar */}
                   <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: st.color, borderRadius: "14px 0 0 14px" }} />
 
-                  {/* Avatar */}
                   <div style={{ width: 42, height: 42, borderRadius: "50%", background: COLORS.lightMint, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Josefin Sans', sans-serif", fontSize: 13, fontWeight: 700, color: COLORS.green, flexShrink: 0, marginLeft: 8 }}>
                     {getInitials(appt.patient_name)}
                   </div>
 
-                  {/* Info */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                       <p style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.navy }}>{appt.patient_name}</p>
@@ -280,14 +274,12 @@ export default function DoctorAppointmentsPage() {
                     </div>
                   </div>
 
-                  {/* Actions */}
                   {canAct && (
                     <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                       <button
                         disabled={!!actionLoading}
                         onClick={() => setConfirmModal({ id: appt.id, action: "completed", name: appt.patient_name })}
                         style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 12px", borderRadius: 8, border: "1px solid #BBF7D0", background: "#F0FDF4", color: "#15803D", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", transition: "all 0.12s" }}
-                        title="Mark as completed"
                       >
                         <CheckCircleIcon /> Done
                       </button>
@@ -295,7 +287,6 @@ export default function DoctorAppointmentsPage() {
                         disabled={!!actionLoading}
                         onClick={() => setConfirmModal({ id: appt.id, action: "cancelled", name: appt.patient_name })}
                         style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 12px", borderRadius: 8, border: "1px solid #FECACA", background: "#FEF2F2", color: "#B91C1C", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", transition: "all 0.12s" }}
-                        title="Cancel appointment"
                       >
                         <XCircleIcon /> Cancel
                       </button>
@@ -312,7 +303,7 @@ export default function DoctorAppointmentsPage() {
         )}
       </div>
 
-      {/* ── Confirm Modal ── */}
+      {/* Confirm Modal */}
       {confirmModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setConfirmModal(null)}>
           <div style={{ background: COLORS.white, borderRadius: 20, padding: "2rem", maxWidth: 360, width: "90%", animation: "slideIn 0.2s ease" }} onClick={(e) => e.stopPropagation()}>
@@ -342,12 +333,28 @@ export default function DoctorAppointmentsPage() {
         </div>
       )}
 
-      {/* ── Toast ── */}
+      {/* Toast */}
       {toast && (
         <div style={{ position: "fixed", bottom: 32, left: "50%", transform: "translateX(-50%)", background: COLORS.navy, color: "white", padding: "12px 24px", borderRadius: 12, fontSize: 13, fontFamily: "'Josefin Sans', sans-serif", fontWeight: 600, zIndex: 200, animation: "slideIn 0.25s ease", boxShadow: "0 8px 30px rgba(0,0,0,0.2)", whiteSpace: "nowrap" }}>
           {toast}
         </div>
       )}
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// Default export with Suspense boundary
+// ─────────────────────────────────────────────
+
+export default function DoctorAppointmentsPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F7F9F8" }}>
+        <div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid #E6F7F2", borderTopColor: "#3EB489", animation: "spin 0.7s linear infinite" }} />
+      </div>
+    }>
+      <DoctorAppointmentsContent />
+    </Suspense>
   );
 }
