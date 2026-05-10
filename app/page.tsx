@@ -674,8 +674,24 @@ export default function LandingPage() {
                       <div style={{ fontSize: 11, color: COLORS.navyMid, marginTop: 2 }}>{user.email}</div>
                     </div>
                     {[
-                      { label: "Dashboard", action: () => { router.push("/patient/dashboard"); setAvatarDropdown(false); } },
-                      { label: "Profile", action: () => { router.push("/patient/profile"); setAvatarDropdown(false); } },
+                      {
+    label: "Dashboard",
+    action: () => {
+      if (user.role === "admin")        router.push("/admin/dashboard");
+      else if (user.role === "doctor")  router.push("/doctor/dashboard");
+      else                              router.push("/patient/dashboard");
+      setAvatarDropdown(false);
+    },
+  },
+  {
+    label: "Profile",
+    action: () => {
+      if (user.role === "admin")        router.push("/admin/settings");
+      else if (user.role === "doctor")  router.push("/doctor/profile");
+      else                              router.push("/patient/profile");
+      setAvatarDropdown(false);
+    },
+  },
                     ].map((item) => (
                       <button key={item.label} onClick={item.action}
                         style={{ width: "100%", padding: "12px 18px", textAlign: "left", background: "none", border: "none", fontSize: 12, fontWeight: 700, color: COLORS.navy, letterSpacing: "0.08em", cursor: "pointer", fontFamily: "inherit" }}
