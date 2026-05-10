@@ -158,13 +158,9 @@ export default function DoctorProfilePage() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab]           = useState<"info" | "password">("info");
-  const [photoUrl, setPhotoUrl]             = useState<string | null>(null);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("doctor_photo");
-    if (saved) setPhotoUrl(saved);
-  }, []);
-
+  const [photoUrl, setPhotoUrl] = useState<string | null>(() =>
+  typeof window === "undefined" ? null : localStorage.getItem("doctor_photo")
+);
   const [infoForm, setInfoForm]             = useState({ full_name: user?.full_name || "", phone_number: user?.phone_number || "" });
   const [infoFieldErrors, setInfoFieldErrors] = useState({ full_name: "", phone_number: "" });
   const [infoLoading, setInfoLoading]       = useState(false);

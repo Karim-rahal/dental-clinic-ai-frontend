@@ -94,7 +94,7 @@ export default function AdminSettings() {
   const [openTime,      setOpenTime]      = useState("08:00");
   const [closeTime,     setCloseTime]     = useState("18:00");
 
-  const [adminName,        setAdminName]        = useState(rawUser?.name ?? "");
+  const [adminName,        setAdminName]        = useState(rawUser?.full_name ?? "");
   const [adminEmail,       setAdminEmail]       = useState(rawUser?.email ?? "");
   const [currentPassword,  setCurrentPassword]  = useState("");
   const [newPassword,      setNewPassword]      = useState("");
@@ -171,7 +171,7 @@ export default function AdminSettings() {
           <div style={sect}>
             <div style={sectHead}>
               <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.navy }}>Clinic Details</div>
-              <div style={{ fontSize: 12, color: COLORS.navyMid, marginTop: 3 }}>Update your clinic's public information</div>
+              <div style={{ fontSize: 12, color: COLORS.navyMid, marginTop: 3 }}>Update your clinic&apos;s public information</div>
             </div>
             <div style={sectBody}>
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 20 }}>
@@ -231,7 +231,7 @@ export default function AdminSettings() {
           <div style={sect}>
             <div style={sectHead}>
               <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.navy }}>Change Password</div>
-              <div style={{ fontSize: 12, color: COLORS.navyMid, marginTop: 3 }}>Use a strong password you don't use elsewhere</div>
+              <div style={{ fontSize: 12, color: COLORS.navyMid, marginTop: 3 }}>Use a strong password you don&apos;t use elsewhere</div>
             </div>
             <div style={sectBody}>
               <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 420, marginBottom: 20 }}>
@@ -435,7 +435,7 @@ export default function AdminSettings() {
                 <p style={{ fontSize: 12, color: COLORS.navyMid, marginTop: 4 }}>{activeTab}</p>
               </div>
               <div style={{ padding: "20px 16px" }}>
-                <TabContent />
+                {TabContent()}
               </div>
             </div>
           ) : (
@@ -473,7 +473,7 @@ export default function AdminSettings() {
 
             <div style={{ flex: 1, overflowY: "auto", padding: "28px 32px" }}>
               <div style={{ maxWidth: 780 }}>
-                <TabContent />
+               {TabContent()}
               </div>
             </div>
           </>

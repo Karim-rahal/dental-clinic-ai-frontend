@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import api from "@/lib/api";
 import axios from "axios";
 import { PhoneOff } from "lucide-react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 interface CallLog {
   id: string;
   caller_name: string;
@@ -209,23 +210,23 @@ function AdminCallLogsContent() {
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 3000); };
 
-  const scheduleCallback = async (log: CallLog) => {
-    try {
-      await api.post("/admin/callbacks", {
-        patient_name: log.caller_name,
-        phone: log.phone,
-        reason: "Missed call — follow-up required",
-        priority: "normal",
-        status: "pending",
-        scheduled_for: new Date(Date.now() + 3600000).toISOString(),
-      });
-      showToast("✓ Callback scheduled.");
-    } catch (err) {
-      if (axios.isAxiosError(err)) showToast(err.response?.data?.error || "Failed to schedule callback.");
-      else showToast("Failed to schedule callback.");
-    }
-  };
-
+  const scheduleCallback = useCallback(async (log: CallLog) => {
+  try {
+    const scheduledFor = new Date(Date.now() + 3600000).toISOString();
+    await api.post("/admin/callbacks", {
+      patient_name: log.caller_name,
+      phone: log.phone,
+      reason: "Missed call — follow-up required",
+      priority: "normal",
+      status: "pending",
+      scheduled_for: scheduledFor,
+    });
+    showToast("✓ Callback scheduled.");
+  } catch (err) {
+    if (axios.isAxiosError(err)) showToast(err.response?.data?.error || "Failed to schedule callback.");
+    else showToast("Failed to schedule callback.");
+  }
+}, []); 
   const filtered = logs
     .filter((l) => dirFilter === "all" || l.direction === dirFilter)
     .filter((l) => statFilter === "all" || l.status === statFilter)

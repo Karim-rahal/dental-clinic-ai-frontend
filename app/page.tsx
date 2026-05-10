@@ -94,12 +94,10 @@ function TeethBrushHero() {
   const [brushAngle, setBrushAngle] = useState(0);
   const [mousePos, setMousePos] = useState({ x: -200, y: -200 });
   const [showMessage, setShowMessage] = useState(false);
-  const [isTouch, setIsTouch] = useState(false);
+  const isTouch = typeof window !== "undefined" && "ontouchstart" in window;
   const sparkleId = useRef(0);
 
-  useEffect(() => {
-    setIsTouch("ontouchstart" in window);
-  }, []);
+  
 
   useEffect(() => {
     if (cleanPercent >= 100 && !showMessage) {
@@ -520,7 +518,10 @@ export default function LandingPage() {
   const [avatarDropdown, setAvatarDropdown] = useState(false);
   const [authDrawer, setAuthDrawer] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+ const [photoUrl, setPhotoUrl] = useState<string | null>(() => {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("doctor_photo");
+});
   const avatarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
