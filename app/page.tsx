@@ -518,32 +518,14 @@ export default function LandingPage() {
   const [avatarDropdown, setAvatarDropdown] = useState(false);
   const [authDrawer, setAuthDrawer] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
- const [photoUrl, setPhotoUrl] = useState<string | null>(() => {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("doctor_photo");
-});
+ const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const avatarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!emblaApi) return;
-    emblaApi.on("select", () => setActiveIndex(emblaApi.selectedScrollSnap()));
-    const auto = setInterval(() => emblaApi.scrollNext(), 4500);
-    return () => clearInterval(auto);
-  }, [emblaApi]);
-
-  useEffect(() => {
-    const loadPhoto = () => {
-      const saved = localStorage.getItem("patient_photo");
-      if (saved) setPhotoUrl(saved);
-    };
-    loadPhoto();
-    const handleClick = (e: MouseEvent) => {
-      if (avatarRef.current && !avatarRef.current.contains(e.target as Node)) setAvatarDropdown(false);
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  if (!user?.id) return;
+  const saved = localStorage.getItem(`photo_${user.id}`);
+  setTimeout(() => setPhotoUrl(saved), 0);
+}, [user?.id]);
 
   const initials = user?.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "";
 

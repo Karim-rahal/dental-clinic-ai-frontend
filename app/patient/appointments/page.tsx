@@ -279,7 +279,7 @@ function AppointmentsContent() {
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                           <span style={{ fontSize: 12, color: COLORS.navyMid }}>{date} · {time}</span>
-                          {appt.doctor_name && <span style={{ fontSize: 12, color: COLORS.navyMid }}>Dr. {appt.doctor_name}</span>}
+                          {appt.doctor_name && <span style={{ fontSize: 12, color: COLORS.navyMid }}>{appt.doctor_name}</span>}
                         </div>
                       </div>
                       {canAct && (

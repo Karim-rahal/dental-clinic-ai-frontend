@@ -158,7 +158,7 @@ export default function DoctorProfilePage() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab]           = useState<"info" | "password">("info");
-  const [photoUrl, setPhotoUrl]             = useState<string | null>(() => typeof window !== "undefined" ? localStorage.getItem("doctor_photo") : null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   const [infoForm, setInfoForm]             = useState({ full_name: user?.full_name || "", phone_number: user?.phone_number || "" });
   const [infoFieldErrors, setInfoFieldErrors] = useState({ full_name: "", phone_number: "" });
@@ -173,13 +173,18 @@ export default function DoctorProfilePage() {
   const [pwError, setPwError]               = useState("");
 
   const sidebarWidth = isTablet ? 64 : 220;
+  useEffect(() => {
+  if (!user?.id) return;
+  const saved = localStorage.getItem(`photo_${user.id}`);
+  setTimeout(() => setPhotoUrl(saved), 0);
+}, [user?.id]);
   const getInitials = (name: string) => name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => { const url = ev.target?.result as string; setPhotoUrl(url); localStorage.setItem("doctor_photo", url); };
+   reader.onload = (ev) => { const url = ev.target?.result as string; setPhotoUrl(url); localStorage.setItem(`photo_${user?.id}`, url); };
     reader.readAsDataURL(file);
   };
 
@@ -266,7 +271,7 @@ export default function DoctorProfilePage() {
               <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)" }}>{user.email}</p>
             </div>
             {photoUrl && (
-              <button onClick={() => { setPhotoUrl(null); localStorage.removeItem("doctor_photo"); }}
+              <button onClick={() => { setPhotoUrl(null); localStorage.removeItem(`photo_${user?.id}`); }}
                 style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", background: "none", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", zIndex: 1, touchAction: "manipulation", whiteSpace: "nowrap" }}
               >Remove photo</button>
             )}

@@ -134,7 +134,7 @@ export default function DoctorDashboard() {
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading,      setLoading]      = useState(true);
-  const [photoUrl,     setPhotoUrl]     = useState<string | null>(() => typeof window !== "undefined" ? localStorage.getItem("doctor_photo") : null);
+ const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [activeNav,    setActiveNav]    = useState("dashboard");
   const [notes,        setNotes]        = useState(["Review patient X-rays", "Confirm tomorrow's schedule", "Update treatment notes"]);
   const [newNote,      setNewNote]      = useState("");
@@ -158,8 +158,13 @@ export default function DoctorDashboard() {
   useEffect(() => {
     api.get("/doctor/appointments").then((r) => setAppointments(r.data)).catch(() => {}).finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+  if (!user?.id) return;
+  const saved = localStorage.getItem(`photo_${user.id}`);
+  setTimeout(() => setPhotoUrl(saved), 0);
+}, [user?.id]);
 
-  const savePhoto = (url: string) => { setPhotoUrl(url); localStorage.setItem("doctor_photo", url); };
+ const savePhoto = (url: string) => { setPhotoUrl(url); localStorage.setItem(`photo_${user?.id}`, url); };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -192,7 +197,7 @@ export default function DoctorDashboard() {
     streamRef.current?.getTracks().forEach((t) => t.stop()); streamRef.current = null;
   };
 
-  const removePhoto = () => { setPhotoUrl(null); localStorage.removeItem("doctor_photo"); closePhotoModal(); };
+ const removePhoto = () => { setPhotoUrl(null); localStorage.removeItem(`photo_${user?.id}`); closePhotoModal(); };
 
   const fmt = (dt: string) => {
     const d = new Date(dt);

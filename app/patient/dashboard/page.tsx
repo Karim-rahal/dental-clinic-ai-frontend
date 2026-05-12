@@ -133,7 +133,7 @@ export default function PatientDashboard() {
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading,      setLoading]      = useState(true);
-  const [photoUrl,     setPhotoUrl]     = useState<string | null>(() => typeof window !== "undefined" ? localStorage.getItem("patient_photo") : null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [activeNav,    setActiveNav]    = useState("dashboard");
   const [notes,        setNotes]        = useState(["Call the clinic to confirm", "Bring insurance card", "Check X-ray results"]);
   const [newNote,      setNewNote]      = useState("");
@@ -157,8 +157,13 @@ export default function PatientDashboard() {
   useEffect(() => {
     api.get("/appointments").then((r) => setAppointments(r.data)).catch(() => {}).finally(() => setLoading(false));
   }, []);
+  useEffect(() => {
+  if (!user?.id) return;
+  const saved = localStorage.getItem(`photo_${user.id}`);
+  setTimeout(() => setPhotoUrl(saved), 0);
+}, [user?.id]);
 
-  const savePhoto = (url: string) => { setPhotoUrl(url); localStorage.setItem("patient_photo", url); };
+const savePhoto = (url: string) => { setPhotoUrl(url); localStorage.setItem(`photo_${user?.id}`, url); };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -191,7 +196,7 @@ export default function PatientDashboard() {
     streamRef.current?.getTracks().forEach((t) => t.stop()); streamRef.current = null;
   };
 
-  const removePhoto = () => { setPhotoUrl(null); localStorage.removeItem("patient_photo"); closePhotoModal(); };
+  const removePhoto = () => { setPhotoUrl(null); localStorage.removeItem(`photo_${user?.id}`); closePhotoModal(); };
 
   const fmt = (dt: string) => {
     const d = new Date(dt);

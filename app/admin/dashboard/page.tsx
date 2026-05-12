@@ -44,6 +44,7 @@ interface Activity {
   message: string; created_at: string;
 }
 interface AdminUser {
+  id?: string;
   name?: string;
   email?: string;
   role?: string;
@@ -419,8 +420,7 @@ export default function AdminDashboard() {
       } finally {
         setLoading(false);
       }
-      const saved = localStorage.getItem("admin_photo");
-      if (saved) setPhotoUrl(saved);
+      
     };
     init();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -434,6 +434,11 @@ export default function AdminDashboard() {
       return () => clearTimeout(id);
     }
   }, [isLaptop]);
+  useEffect(() => {
+  if (!user?.id) return;
+  const saved = localStorage.getItem(`photo_${user.id}`);
+  setTimeout(() => setPhotoUrl(saved), 0);
+}, [user?.id]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -449,7 +454,7 @@ export default function AdminDashboard() {
     if (dx > 60  && mobileMenuOpen) setMobileMenuOpen(false);
   }, [drawerOpen, mobileMenuOpen]);
 
-  const savePhoto = (url: string) => { setPhotoUrl(url); localStorage.setItem("admin_photo", url); };
+  const savePhoto = (url: string) => { setPhotoUrl(url); localStorage.setItem(`photo_${user?.id}`, url); };
   const closePhotoModal = useCallback(() => {
     setPhotoModal(false); setCameraActive(false); setCameraError("");
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -479,7 +484,7 @@ export default function AdminDashboard() {
     savePhoto(canvas.toDataURL("image/jpeg"));
     closePhotoModal();
   };
-  const removePhoto = () => { setPhotoUrl(null); localStorage.removeItem("admin_photo"); closePhotoModal(); };
+  const removePhoto = () => { setPhotoUrl(null); localStorage.removeItem(`photo_${user?.id}`); closePhotoModal(); };
 
   const initials         = user?.name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() ?? "A";
   const pendingCallbacks = callbacks.filter((c) => c.status === "pending");

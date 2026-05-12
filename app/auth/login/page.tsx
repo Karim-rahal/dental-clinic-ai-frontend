@@ -98,35 +98,56 @@ export default function LoginPage() {
   };
 
   const handleSubmit = async () => {
-    const emailErr    = validateEmail(form.email);
-    const passwordErr = validatePassword(form.password);
-    setTouched({ email: true, password: true });
-    setFieldErrors({ email: emailErr, password: passwordErr });
-    if (emailErr || passwordErr) return;
-    setServerError(""); setLoading(true);
-    try {
-      const res = await api.post("/auth/login", { email: form.email.trim().toLowerCase(), password: form.password, role });
-      login(res.data.token, res.data.user);
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        const status  = err.response?.status;
-        const message = err.response?.data?.message || err.response?.data?.error || "";
-        if (status === 404 || message.toLowerCase().includes("not found"))
-          setServerError("No account found with this email.");
-        else if (status === 403 || message.toLowerCase().includes("role") || message.toLowerCase().includes("unauthorized"))
-          setServerError(`This account does not have ${role === "staff" ? "staff/admin" : "patient"} access.`);
-        else if (status === 401 || message.toLowerCase().includes("password") || message.toLowerCase().includes("invalid"))
-          setServerError("Incorrect password. Please try again.");
-        else if (status === 429)
-          setServerError("Too many attempts. Please wait a moment.");
-        else
-          setServerError(message || "Login failed. Please check your credentials.");
-      } else {
-        setServerError("Network error. Please check your connection.");
-      }
-    } finally { setLoading(false); }
-  };
+  const emailErr    = validateEmail(form.email);
+  const passwordErr = validatePassword(form.password);
+  setTouched({ email: true, password: true });
+  setFieldErrors({ email: emailErr, password: passwordErr });
+  if (emailErr || passwordErr) return;
+  setServerError(""); setLoading(true);
+  try {
+    const res = await api.post("/auth/login", { email: form.email.trim().toLowerCase(), password: form.password });
+    console.log(res.data);
+    const user = res.data.user;
+    const userRole = user.role; 
 
+  
+    if (role === "patient" && userRole !== "patient") {
+      setServerError("This account does not have patient access. Please use Staff / Admin login.");
+      return;
+    }
+    if (role === "staff" && userRole === "patient") {
+      setServerError("This account does not have staff or admin access. Please use the Patient login.");
+      return;
+    }
+
+    // Role matches — log in and redirect
+    login(res.data.token, user);
+
+    if (userRole === "patient") {
+      router.push("/patient/dashboard");
+    } else if (userRole === "doctor") {
+      router.push("/doctor/dashboard");
+    } else if (userRole === "admin") {
+      router.push("/admin/dashboard");
+    }
+
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      const status  = err.response?.status;
+      const message = err.response?.data?.message || err.response?.data?.error || "";
+      if (status === 404 || message.toLowerCase().includes("not found"))
+        setServerError("No account found with this email.");
+      else if (status === 401 || message.toLowerCase().includes("password") || message.toLowerCase().includes("invalid"))
+        setServerError("Incorrect password. Please try again.");
+      else if (status === 429)
+        setServerError("Too many attempts. Please wait a moment.");
+      else
+        setServerError(message || "Login failed. Please check your credentials.");
+    } else {
+      setServerError("Network error. Please check your connection.");
+    }
+  } finally { setLoading(false); }
+};
   const hasErr = (name: "email" | "password") => touched[name] && !!fieldErrors[name];
 
   const fieldStyle = (name: "email" | "password"): React.CSSProperties => ({
