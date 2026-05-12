@@ -366,7 +366,7 @@ export default function AdminSettings() {
             <div style={{ width: 18, height: 2, background: COLORS.navy, borderRadius: 2 }} />
             <div style={{ width: 12, height: 2, background: COLORS.navy, borderRadius: 2 }} />
           </button>
-          <span style={{ fontSize: 14, fontWeight: 900, letterSpacing: "0.12em", color: COLORS.navy }}>DentAI</span>
+          <span style={{ fontSize: 14, fontWeight: 900, letterSpacing: "0.12em", color: COLORS.navy }}>BrightSmile</span>
           <div style={{ width: 40 }} />
         </div>
       )}
@@ -393,7 +393,7 @@ export default function AdminSettings() {
         <aside style={{ width: sidebarWidth, background: COLORS.white, borderRight: `1px solid ${COLORS.border}`, display: "flex", flexDirection: "column", position: "fixed", top: 0, bottom: 0, left: 0, zIndex: 50, boxShadow: "2px 0 12px rgba(44,62,80,0.04)", transition: "width 0.2s ease", overflow: "hidden" }}>
           <div style={{ padding: isTablet ? "24px 0" : "24px 20px 20px", borderBottom: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", justifyContent: isTablet ? "center" : "flex-start", gap: 10 }}>
             <div style={{ width: 32, height: 32, borderRadius: "50%", background: COLORS.green, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 900, color: "white", flexShrink: 0 }}>A</div>
-            {!isTablet && <span style={{ fontSize: 15, fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", color: COLORS.navy }}>DentAI</span>}
+            {!isTablet && <span style={{ fontSize: 15, fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", color: COLORS.navy }}>BrightSmile</span>}
           </div>
           <nav style={{ padding: isTablet ? "20px 8px" : "20px 12px", flex: 1, overflowY: "auto" }}>
             {!isTablet && <div style={{ fontSize: 9, fontWeight: 700, color: COLORS.navyMid, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 8, paddingLeft: 8 }}>Admin Portal</div>}

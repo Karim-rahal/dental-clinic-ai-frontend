@@ -598,7 +598,7 @@ export default function AdminDashboard() {
             <div style={{ width: 12, height: 2, backgroundColor: COLORS.navy, borderRadius: 2 }} />
           </button>
           
-          <span style={{ fontSize: 14, fontWeight: 900, letterSpacing: "0.15em", color: COLORS.navy }}>DentAI</span>
+          <span style={{ fontSize: 14, fontWeight: 900, letterSpacing: "0.15em", color: COLORS.navy }}>BrightSmile</span>
           
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div onClick={() => router.push("/admin/callbacks")} style={{ position: "relative", cursor: "pointer", touchAction: "manipulation" }}>
@@ -653,7 +653,7 @@ export default function AdminDashboard() {
           
           <div style={{ padding: isTablet ? "24px 0" : "24px 20px 20px", borderBottom: "1px solid rgba(167,228,216,0.3)", display: "flex", alignItems: "center", justifyContent: isTablet ? "center" : "flex-start", gap: 10 }}>
             <div style={{ width: 32, height: 32, borderRadius: "50%", backgroundColor: COLORS.green, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 900, color: "white", flexShrink: 0 }}>A</div>
-            {!isTablet && <span style={{ fontSize: 15, fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", color: COLORS.navy }}>DentAI</span>}
+            {!isTablet && <span style={{ fontSize: 15, fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", color: COLORS.navy }}>BrightSmile</span>}
           </div>
 
           

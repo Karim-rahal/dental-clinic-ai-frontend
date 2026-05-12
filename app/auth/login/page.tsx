@@ -221,7 +221,7 @@ export default function LoginPage() {
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ width: 36, height: 36, borderRadius: "50%", backgroundColor: COLORS.green, display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}><ToothIcon /></div>
-                <span style={{ fontSize: 16, fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", color: COLORS.navy }}>DentAI</span>
+                <span style={{ fontSize: 16, fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", color: COLORS.navy }}>BrightSmile</span>
               </div>
             </div>
           )}
@@ -229,7 +229,7 @@ export default function LoginPage() {
           <AnimatePresence mode="wait">
             {step === 1 && (
               <motion.div key="picker" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ duration: 0.2 }}>
-                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: COLORS.green, marginBottom: 8 }}>Welcome to DentAI</p>
+                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: COLORS.green, marginBottom: 8 }}>Welcome to BrightSmile</p>
                 <h2 style={{ fontSize: isMobile ? 24 : 28, fontWeight: 900, color: COLORS.navy, lineHeight: 1.1, marginBottom: 8 }}>Who are you?</h2>
                 <p style={{ color: COLORS.navyMid, fontSize: 14, marginBottom: 28 }}>Select your role to continue.</p>
 

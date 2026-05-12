@@ -547,8 +547,12 @@ export default function LandingPage() {
             >
               <div style={{ padding: "28px 24px", borderBottom: `1px solid ${COLORS.lightMint}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 30, height: 30, borderRadius: "50%", backgroundColor: COLORS.green, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 900, color: "white" }}>D</div>
-                  <span style={{ fontSize: 15, fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", color: COLORS.navy }}>DentAI</span>
+                 <div style={{ width: 30, height: 30, borderRadius: "50%", backgroundColor: COLORS.green, display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2C8 2 5 5 5 8c0 2 .5 3.5 1 5l1 8c.2 1 1 1 1.5 0L9 17h6l.5 4c.5 1 1.3 1 1.5 0l1-8c.5-1.5 1-3 1-5 0-3-3-6-7-6z"/>
+  </svg>
+</div>
+                  <span style={{ fontSize: 15, fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", color: COLORS.navy }}>BrightSmile</span>
                 </div>
                 <button onClick={() => setAuthDrawer(false)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 22, color: COLORS.navyMid, display: "flex", alignItems: "center" }}>×</button>
               </div>
@@ -558,7 +562,7 @@ export default function LandingPage() {
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                   </svg>
                 </div>
-                <h2 style={{ fontSize: 24, fontWeight: 900, color: COLORS.navy, textAlign: "center", marginBottom: 8 }}>Welcome to DentAI</h2>
+                <h2 style={{ fontSize: 24, fontWeight: 900, color: COLORS.navy, textAlign: "center", marginBottom: 8 }}>Welcome to BrightSmile</h2>
                 <p style={{ fontSize: 13, color: COLORS.navyMid, textAlign: "center", lineHeight: 1.7, marginBottom: 36 }}>Sign in or create an account to manage your appointments and dental records.</p>
                 <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                   onClick={() => { setAuthDrawer(false); router.push("/auth/login"); }}
@@ -622,8 +626,12 @@ export default function LandingPage() {
       >
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: "50%", backgroundColor: COLORS.green, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "white" }}>D</div>
-          <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: "0.18em", textTransform: "uppercase", color: COLORS.navy }}>DentAI</span>
+          <div style={{ width: 34, height: 34, borderRadius: "50%", backgroundColor: COLORS.green, display: "flex", alignItems: "center", justifyContent: "center", color: "white" }}>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2C8 2 5 5 5 8c0 2 .5 3.5 1 5l1 8c.2 1 1 1 1.5 0L9 17h6l.5 4c.5 1 1.3 1 1.5 0l1-8c.5-1.5 1-3 1-5 0-3-3-6-7-6z"/>
+  </svg>
+</div>
+          <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: "0.18em", textTransform: "uppercase", color: COLORS.navy }}>BrightSmile</span>
         </div>
 
         {/* Desktop nav links */}
@@ -901,13 +909,13 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1300, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 32, height: 32, borderRadius: "50%", backgroundColor: COLORS.green, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "white" }}>D</div>
-            <span style={{ fontWeight: 900, letterSpacing: "0.18em", textTransform: "uppercase", color: COLORS.navy }}>DentAI</span>
+            <span style={{ fontWeight: 900, letterSpacing: "0.18em", textTransform: "uppercase", color: COLORS.navy }}>BrightSmile</span>
           </div>
           <div style={{ color: COLORS.navyMid, fontSize: 12, textAlign: "center", lineHeight: 1.8 }}>
             Hamra Main Street, Beirut · Mon–Fri 9AM–5PM · +961 70 000 000
           </div>
           <div style={{ color: "rgba(44,62,80,0.3)", fontSize: 12 }}>
-            2026 DentAI — Karim Rahal &amp; Sarah Dhainy — LAU
+            2026 BrightSmile — Karim Rahal &amp; Sarah Dhainy — LAU
           </div>
         </div>
       </footer>
