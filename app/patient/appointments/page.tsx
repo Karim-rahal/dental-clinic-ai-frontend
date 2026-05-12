@@ -1,30 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useEffect, useState, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
-
-// ─────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────
-
-interface Appointment {
-  id: number;
-  service: string;
-  datetime: string;
-  status: string;
-  doctor_id: string;
-  doctor_name?: string;
-  booked_via: string;
-}
-
-type FilterTab = "upcoming" | "pending" | "past" | "cancelled";
-
-// ─────────────────────────────────────────────
-// Constants
-// ─────────────────────────────────────────────
 
 const COLORS = {
   green:     "#3EB489",
@@ -38,547 +17,317 @@ const COLORS = {
   border:    "rgba(44,62,80,0.10)",
 };
 
-const SERVICE_META: Record<string, { accent: string; bg: string }> = {
-  "Dental Checkup":            { accent: "#3EB489", bg: "#E6F7F2" },
-  "Teeth Cleaning":            { accent: "#5BCFB5", bg: "#E1F9F4" },
-  "Dental Filling":            { accent: "#4A9FD4", bg: "#E6F2FB" },
-  "Teeth Whitening":           { accent: "#F0A500", bg: "#FEF6E4" },
-  "Braces Consultation":       { accent: "#9B6FCF", bg: "#F3EEFF" },
-  "Root Canal":                { accent: "#E06B6B", bg: "#FEECEC" },
-  "Root Canal Consultation":   { accent: "#E06B6B", bg: "#FEECEC" },
-};
-
-const STATUS_META: Record<string, { bg: string; color: string; label: string }> = {
-  scheduled: { bg: "#E6F7F2", color: "#0F6E56", label: "Scheduled" },
-  pending:   { bg: "#FEF6E4", color: "#854F0B", label: "Pending"   },
-  cancelled: { bg: "#FEECEC", color: "#A32D2D", label: "Cancelled" },
-  completed: { bg: "#E6F2FB", color: "#185FA5", label: "Completed" },
-};
-
-const TABS: { id: FilterTab; label: string }[] = [
-  { id: "upcoming",  label: "Upcoming"  },
-  { id: "pending",   label: "Pending"   },
-  { id: "past",      label: "Past"      },
-  { id: "cancelled", label: "Cancelled" },
+const NAV_ITEMS = [
+  { id: "home",         label: "Home",         path: "/",                       icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
+  { id: "dashboard",    label: "Dashboard",    path: "/patient/dashboard",      icon: "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" },
+  { id: "appointments", label: "Appointments", path: "/patient/appointments",   icon: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" },
+  { id: "book",         label: "Book Visit",   path: "/patient/book",           icon: "M12 5v14M5 12h14" },
+  { id: "upload",       label: "Upload X-Rays",path: "/patient/upload",         icon: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" },
+  { id: "profile",      label: "Profile",      path: "/patient/profile",        icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" },
 ];
 
-// ─────────────────────────────────────────────
-// Icons
-// ─────────────────────────────────────────────
+const STATUS_STYLES: Record<string, { bg: string; color: string; border: string; label: string }> = {
+  pending:   { bg: "#FFF7ED", color: "#C2410C", border: "#FED7AA", label: "Pending"   },
+  scheduled: { bg: "#EFF6FF", color: "#1D4ED8", border: "#BFDBFE", label: "Scheduled" },
+  completed: { bg: "#F0FDF4", color: "#15803D", border: "#BBF7D0", label: "Completed" },
+  cancelled: { bg: "#FEF2F2", color: "#B91C1C", border: "#FECACA", label: "Cancelled" },
+};
 
-function ClockIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-      <circle cx="12" cy="12" r="9" /><polyline points="12 7 12 12 15 15" />
-    </svg>
-  );
+const FILTERS = ["all","pending","scheduled","completed","cancelled"] as const;
+type Filter = typeof FILTERS[number];
+
+interface Appointment {
+  id: number;
+  service: string;
+  datetime: string;
+  status: string;
+  doctor_name?: string;
+  phone_number?: string;
 }
 
-function StethoscopeIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-      <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3" />
-      <path d="M8 15v1a6 6 0 0 0 6 6h0a6 6 0 0 0 6-6v-4" />
-      <circle cx="20" cy="10" r="2" />
-    </svg>
-  );
+function useBreakpoint() {
+  const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1280);
+  useEffect(() => { const h = () => setWidth(window.innerWidth); window.addEventListener("resize", h); return () => window.removeEventListener("resize", h); }, []);
+  return { isMobile: width < 768, isTablet: width >= 768 && width < 1024 };
 }
 
-function PhoneIcon() {
-  return (
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 5.55 5.55l.97-.97a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-    </svg>
-  );
+function NavIcon({ d }: { d: string }) {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>;
 }
 
-function UploadIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <polyline points="16 16 12 12 8 16" />
-      <line x1="12" y1="12" x2="12" y2="21" />
-      <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
-    </svg>
-  );
-}
-
-function ChevronDown() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
-
-function ChevronUp() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-      <polyline points="18 15 12 9 6 15" />
-    </svg>
-  );
-}
-
-function ArrowLeftIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
-    </svg>
-  );
-}
-
-// ─────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────
-
-function parseDate(datetime: string) {
-  const d = new Date(datetime);
-  return {
-    dayName:  d.toLocaleDateString("en-US", { weekday: "short" }),
-    day:      d.getDate(),
-    month:    d.toLocaleDateString("en-US", { month: "long" }),
-    monthYear:d.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
-    time:     d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-    isoDate:  d.toISOString().split("T")[0],
-  };
-}
-
-function isToday(datetime: string) {
-  const today = new Date().toISOString().split("T")[0];
-  return new Date(datetime).toISOString().split("T")[0] === today;
-}
-
-function groupByDate(appointments: Appointment[]) {
-  const groups: Record<string, Appointment[]> = {};
-  for (const appt of appointments) {
-    const { isoDate } = parseDate(appt.datetime);
-    if (!groups[isoDate]) groups[isoDate] = [];
-    groups[isoDate].push(appt);
-  }
-  return groups;
-}
-
-function filterAppointments(appointments: Appointment[], tab: FilterTab): Appointment[] {
-  const now = new Date();
-  return appointments.filter((a) => {
-    const d = new Date(a.datetime);
-    if (tab === "upcoming")  return a.status !== "cancelled" && d >= now;
-    if (tab === "pending")   return a.status === "pending";
-    if (tab === "past")      return a.status !== "cancelled" && d < now;
-    if (tab === "cancelled") return a.status === "cancelled";
-    return true;
-  });
-}
-
-// ─────────────────────────────────────────────
-// Dropdown menu component
-// ─────────────────────────────────────────────
-
-function ActionMenu({
-  appt,
-  onCancel,
-  onReschedule,
-  onUpload,
-  cancelling,
-}: {
-  appt: Appointment;
-  onCancel: (id: number) => void;
-  onReschedule: (id: number) => void;
-  onUpload: (id: number) => void;
-  cancelling: number | null;
+function Sidebar({ isMobile, isTablet, logout, router, mobileMenuOpen, setMobileMenuOpen }: {
+  isMobile: boolean; isTablet: boolean; logout: () => void; router: ReturnType<typeof useRouter>;
+  mobileMenuOpen: boolean; setMobileMenuOpen: (v: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
-  const menuItems = [
-    {
-      icon: <UploadIcon />,
-      label: "Upload Documents",
-      color: COLORS.navy,
-      onClick: () => { onUpload(appt.id); setOpen(false); },
-    },
-    {
-      icon: <ClockIcon />,
-      label: "Reschedule",
-      color: COLORS.navy,
-      onClick: () => { onReschedule(appt.id); setOpen(false); },
-    },
-    {
-      icon: <span style={{ fontSize: 11 }}>✕</span>,
-      label: cancelling === appt.id ? "Cancelling…" : "Cancel Appointment",
-      color: "#A32D2D",
-      onClick: () => { onCancel(appt.id); setOpen(false); },
-    },
-  ];
-
+  const sidebarWidth = isTablet ? 64 : 220;
   return (
-    <div ref={ref} style={{ position: "relative", flexShrink: 0 }}>
-      <button
-        onClick={() => setOpen((p) => !p)}
-        style={{
-          display: "flex", alignItems: "center", gap: 6,
-          padding: "8px 14px",
-          borderRadius: 8,
-          border: `1px solid ${open ? COLORS.navy : COLORS.border}`,
-          background: open ? COLORS.navy : COLORS.white,
-          color: open ? COLORS.white : COLORS.navy,
-          fontSize: 12, fontWeight: 600,
-          fontFamily: "'Josefin Sans', sans-serif",
-          cursor: "pointer", transition: "all 0.15s",
-          letterSpacing: "0.03em",
-        }}
-      >
-        Actions {open ? <ChevronUp /> : <ChevronDown />}
-      </button>
-
-      {open && (
-        <div style={{
-          position: "absolute", top: "calc(100% + 6px)", right: 0,
-          background: COLORS.white,
-          border: `1px solid ${COLORS.border}`,
-          borderRadius: 12,
-          boxShadow: "0 8px 32px rgba(44,62,80,0.12)",
-          minWidth: 200, zIndex: 100,
-          overflow: "hidden",
-          animation: "fadeUp 0.15s ease",
-        }}>
-          {menuItems.map((item, i) => (
-            <button
-              key={i}
-              onClick={item.onClick}
-              style={{
-                width: "100%", display: "flex", alignItems: "center", gap: 10,
-                padding: "11px 16px",
-                background: "transparent",
-                border: "none",
-                borderBottom: i < menuItems.length - 1 ? `1px solid ${COLORS.border}` : "none",
-                cursor: "pointer", textAlign: "left",
-                fontSize: 13, color: item.color,
-                fontFamily: "'DM Sans', sans-serif",
-                fontWeight: 500,
-                transition: "background 0.1s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = COLORS.offWhite)}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+    <>
+      {isMobile && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 56, backgroundColor: COLORS.white, borderBottom: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", zIndex: 60, boxShadow: "0 2px 12px rgba(44,62,80,0.06)" }}>
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ width: 40, height: 40, borderRadius: 10, border: "none", backgroundColor: COLORS.lightMint, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, cursor: "pointer", touchAction: "manipulation" }}>
+            <div style={{ width: 18, height: 2, backgroundColor: COLORS.navy, borderRadius: 2 }} /><div style={{ width: 18, height: 2, backgroundColor: COLORS.navy, borderRadius: 2 }} /><div style={{ width: 12, height: 2, backgroundColor: COLORS.navy, borderRadius: 2 }} />
+          </button>
+          <span style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 14, fontWeight: 900, letterSpacing: "0.12em", color: COLORS.navy }}>DentAI</span>
+          <div style={{ width: 40 }} />
+        </div>
+      )}
+      {isMobile && mobileMenuOpen && (
+        <>
+          <div onClick={() => setMobileMenuOpen(false)} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(44,62,80,0.4)", zIndex: 55, top: 56 }} />
+          <div style={{ position: "fixed", top: 56, left: 0, right: 0, backgroundColor: COLORS.white, zIndex: 56, borderBottom: `1px solid ${COLORS.mint}`, padding: "12px 16px", boxShadow: "0 8px 24px rgba(44,62,80,0.12)", animation: "slideIn 0.2s ease" }}>
+            {NAV_ITEMS.map((item) => (
+              <button key={item.id} onClick={() => { router.push(item.path); setMobileMenuOpen(false); }}
+                style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "13px 14px", borderRadius: 12, border: "none", cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", backgroundColor: item.id === "appointments" ? COLORS.lightMint : "transparent", color: item.id === "appointments" ? COLORS.green : COLORS.navyMid, fontSize: 14, fontWeight: item.id === "appointments" ? 700 : 500, marginBottom: 4, touchAction: "manipulation" }}
+              ><NavIcon d={item.icon} />{item.label}</button>
+            ))}
+            <div style={{ borderTop: `1px solid ${COLORS.mint}`, marginTop: 8, paddingTop: 8 }}>
+              <button onClick={() => { logout(); router.push("/"); }} style={{ width: "100%", padding: "12px 14px", backgroundColor: "transparent", color: "#e05555", border: "1px solid rgba(224,85,85,0.3)", borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif" }}>Sign Out</button>
+            </div>
+          </div>
+        </>
+      )}
+      {!isMobile && (
+        <div style={{ width: sidebarWidth, backgroundColor: COLORS.white, borderRight: "1px solid rgba(167,228,216,0.3)", display: "flex", flexDirection: "column", position: "fixed", top: 0, bottom: 0, left: 0, zIndex: 50, boxShadow: "2px 0 20px rgba(44,62,80,0.04)", transition: "width 0.2s ease", overflow: "hidden" }}>
+          <div style={{ padding: isTablet ? "24px 0" : "24px 20px 20px", borderBottom: "1px solid rgba(167,228,216,0.3)", display: "flex", alignItems: "center", justifyContent: isTablet ? "center" : "flex-start", gap: 10 }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", backgroundColor: COLORS.green, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 900, color: "white", flexShrink: 0 }}>D</div>
+            {!isTablet && <span style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 15, fontWeight: 900, letterSpacing: "0.15em", textTransform: "uppercase", color: COLORS.navy }}>DentAI</span>}
+          </div>
+          <div style={{ padding: isTablet ? "20px 8px" : "20px 12px", flex: 1, overflowY: "auto" }}>
+            {!isTablet && <div style={{ fontSize: 9, fontWeight: 700, color: COLORS.navyMid, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 8, paddingLeft: 8, fontFamily: "'Josefin Sans', sans-serif" }}>Patient Portal</div>}
+            {NAV_ITEMS.map((item) => (
+              <button key={item.id} onClick={() => router.push(item.path)} title={isTablet ? item.label : undefined}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: isTablet ? "center" : "flex-start", gap: isTablet ? 0 : 10, padding: isTablet ? "12px 0" : "10px 12px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", backgroundColor: item.id === "appointments" ? COLORS.lightMint : "transparent", color: item.id === "appointments" ? COLORS.green : COLORS.navyMid, fontSize: 12, fontWeight: item.id === "appointments" ? 700 : 500, marginBottom: 2, transition: "all 0.15s" }}
+                onMouseEnter={(e) => { if (item.id !== "appointments") e.currentTarget.style.backgroundColor = "#F8FFFE"; }}
+                onMouseLeave={(e) => { if (item.id !== "appointments") e.currentTarget.style.backgroundColor = "transparent"; }}
+              ><NavIcon d={item.icon} />{!isTablet && item.label}</button>
+            ))}
+          </div>
+          {!isTablet && (
+            <div style={{ padding: 16, borderTop: "1px solid rgba(167,228,216,0.3)" }}>
+              <div style={{ backgroundColor: COLORS.navy, borderRadius: 16, padding: 16, position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", width: 80, height: 80, borderRadius: "50%", backgroundColor: COLORS.green, opacity: 0.15, bottom: -20, right: -20 }} />
+                <div style={{ position: "relative", zIndex: 1 }}>
+                  <div style={{ fontSize: 9, color: "rgba(167,228,216,0.7)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8, fontFamily: "'Josefin Sans', sans-serif" }}>Book online.</div>
+                  <button onClick={() => router.push("/patient/book")} style={{ width: "100%", padding: 8, backgroundColor: COLORS.green, color: "white", border: "none", borderRadius: 8, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif" }}>+ New Appointment</button>
+                </div>
+              </div>
+            </div>
+          )}
+          <button onClick={() => { logout(); router.push("/"); }} title={isTablet ? "Sign Out" : undefined}
+            style={{ margin: isTablet ? "0 8px 16px" : "0 12px 16px", padding: isTablet ? "12px 0" : "10px", backgroundColor: "transparent", color: "#e05555", border: isTablet ? "none" : "1px solid rgba(224,85,85,0.3)", borderRadius: 10, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            {isTablet ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e05555" strokeWidth="2" strokeLinecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg> : "Sign Out"}
+          </button>
+        </div>
+      )}
+      {isMobile && (
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 64, backgroundColor: COLORS.white, borderTop: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "space-around", zIndex: 60, boxShadow: "0 -2px 12px rgba(44,62,80,0.08)" }}>
+          {NAV_ITEMS.map((item) => (
+            <button key={item.id} onClick={() => router.push(item.path)}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", color: item.id === "appointments" ? COLORS.green : COLORS.navyMid, fontFamily: "inherit", padding: "8px 6px", borderRadius: 10, touchAction: "manipulation", minWidth: 44, minHeight: 44 }}
             >
-              <span style={{ color: item.color, opacity: 0.8 }}>{item.icon}</span>
-              {item.label}
+              <NavIcon d={item.icon} />
+              <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.04em", fontFamily: "'Josefin Sans', sans-serif" }}>{item.label.split(" ")[0]}</span>
             </button>
           ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+function AppointmentsContent() {
+  const { user, logout } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { isMobile, isTablet } = useBreakpoint();
+
+  const [appointments, setAppointments]     = useState<Appointment[]>([]);
+  const [loading, setLoading]               = useState(true);
+  const [filter, setFilter]                 = useState<Filter>((searchParams.get("filter") as Filter) || "all");
+  const [search, setSearch]                 = useState("");
+  const [cancelling, setCancelling]         = useState<number | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [toast, setToast]                   = useState("");
+  const [confirmModal, setConfirmModal]     = useState<{ id: number; name: string } | null>(null);
+
+  const sidebarWidth = isTablet ? 64 : 220;
+
+  useEffect(() => {
+    api.get("/appointments").then((r) => setAppointments(r.data)).catch(() => {}).finally(() => setLoading(false));
+  }, []);
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 3000); };
+
+  const handleCancel = async (id: number) => {
+    setCancelling(id);
+    try {
+      await api.delete(`/appointments/${id}`);
+      setAppointments((p) => p.map((a) => a.id === id ? { ...a, status: "cancelled" } : a));
+      showToast("Appointment cancelled.");
+    } catch { showToast("Failed to cancel. Please try again."); }
+    finally { setCancelling(null); setConfirmModal(null); }
+  };
+
+  const counts = FILTERS.reduce((acc, f) => {
+    acc[f] = f === "all" ? appointments.length : appointments.filter((a) => a.status === f).length;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const filtered = appointments
+    .filter((a) => filter === "all" || a.status === filter)
+    .filter((a) => { const q = search.toLowerCase(); return !q || a.service.toLowerCase().includes(q) || (a.doctor_name || "").toLowerCase().includes(q); })
+    .sort((a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime());
+
+  const fmt = (dt: string) => {
+    const d = new Date(dt);
+    return {
+      date: d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }),
+      time: d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }),
+    };
+  };
+
+  const getInitials = (name: string) => name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+
+  if (!user) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: COLORS.offWhite, fontFamily: "'Josefin Sans', sans-serif" }}>
+        <div style={{ textAlign: "center" }}>
+          <h2 style={{ color: COLORS.navy, marginBottom: 12 }}>Access Restricted</h2>
+          <button onClick={() => router.push("/auth/login")} style={{ color: COLORS.green, background: "none", border: "none", cursor: "pointer", fontSize: 14 }}>Sign in</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ minHeight: "100vh", background: COLORS.offWhite, fontFamily: "'DM Sans', sans-serif", display: "flex" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;600;700;900&family=DM+Sans:wght@300;400;500&display=swap');
+        @keyframes fadeUp  { from { opacity:0; transform:translateY(8px); }  to { opacity:1; transform:translateY(0); } }
+        @keyframes slideIn { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes spin    { to { transform:rotate(360deg); } }
+        * { box-sizing: border-box; }
+        .appt-row:hover { background: #F8FFFE !important; }
+      `}</style>
+
+      <Sidebar isMobile={isMobile} isTablet={isTablet} logout={logout} router={router} mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+
+      <div style={{ flex: 1, marginLeft: isMobile ? 0 : sidebarWidth, paddingTop: isMobile ? 56 : 0, paddingBottom: isMobile ? 72 : 0, minWidth: 0 }}>
+        <div style={{ maxWidth: 860, margin: "0 auto", padding: isMobile ? "1.25rem 1rem 5rem" : "2rem 1.5rem 5rem" }}>
+
+          <div style={{ display: "flex", alignItems: isMobile ? "flex-start" : "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: "1.75rem", animation: "fadeUp 0.3s ease" }}>
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: COLORS.green, fontFamily: "'Josefin Sans', sans-serif", marginBottom: 6 }}>Patient Portal</p>
+              <h2 style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: isMobile ? 22 : 26, fontWeight: 900, color: COLORS.navy, marginBottom: 4 }}>My Appointments</h2>
+              <p style={{ fontSize: 14, color: COLORS.navyMid }}>{appointments.length} total appointments</p>
+            </div>
+            <button onClick={() => router.push("/patient/book")}
+              style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 13, fontWeight: 700, padding: "11px 22px", background: COLORS.navy, color: "white", border: "none", borderRadius: 10, cursor: "pointer", flexShrink: 0, touchAction: "manipulation" }}
+            >+ Book New</button>
+          </div>
+
+          <div style={{ display: "flex", gap: 4, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 5, marginBottom: "1.5rem", width: "fit-content", maxWidth: "100%", overflowX: "auto" }}>
+            {FILTERS.map((f) => (
+              <button key={f} onClick={() => setFilter(f)}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 9, border: "none", background: filter === f ? COLORS.navy : "transparent", color: filter === f ? "white" : COLORS.navyMid, fontSize: 12, fontWeight: filter === f ? 700 : 500, fontFamily: "'Josefin Sans', sans-serif", cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap", touchAction: "manipulation" }}
+              >
+                {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+                {counts[f] > 0 && <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 20, background: filter === f ? "rgba(255,255,255,0.2)" : COLORS.navyLight, color: filter === f ? "white" : COLORS.navyMid }}>{counts[f]}</span>}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ position: "relative", marginBottom: "1.5rem" }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={COLORS.navyMid} strokeWidth="1.8" strokeLinecap="round" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Search by service or doctor…" value={search} onChange={(e) => setSearch(e.target.value)}
+              style={{ width: "100%", padding: "11px 14px 11px 38px", borderRadius: 10, border: `1px solid ${COLORS.border}`, background: COLORS.white, fontSize: 13, color: COLORS.navy, fontFamily: "inherit", outline: "none" }}
+            />
+          </div>
+
+          {loading ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, color: COLORS.navyMid, padding: "3rem 0", justifyContent: "center", fontSize: 14 }}>
+              <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${COLORS.lightMint}`, borderTopColor: COLORS.green, animation: "spin 0.7s linear infinite" }} />
+              Loading appointments…
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "4rem 0", animation: "fadeUp 0.3s ease" }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
+              <p style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 16, fontWeight: 700, color: COLORS.navy, marginBottom: 8 }}>No appointments found</p>
+              <p style={{ fontSize: 13, color: COLORS.navyMid, marginBottom: 20 }}>Try adjusting your filters.</p>
+              {filter === "all" && <button onClick={() => router.push("/patient/book")} style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 13, fontWeight: 700, padding: "11px 26px", background: COLORS.navy, color: "white", border: "none", borderRadius: 10, cursor: "pointer", touchAction: "manipulation" }}>Book an Appointment</button>}
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, animation: "fadeUp 0.4s ease" }}>
+              {filtered.map((appt, i) => {
+                const st = STATUS_STYLES[appt.status] || STATUS_STYLES.pending;
+                const canAct = appt.status !== "cancelled" && appt.status !== "completed";
+                const { date, time } = fmt(appt.datetime);
+                return (
+                  <div key={appt.id} className="appt-row"
+                    style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 14, overflow: "hidden", animation: `fadeUp ${0.05 + i * 0.04}s ease`, position: "relative" }}
+                  >
+                    <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: st.color, borderRadius: "14px 0 0 14px" }} />
+                    <div style={{ padding: isMobile ? "14px 14px 14px 18px" : "16px 20px 16px 22px", display: "flex", alignItems: isMobile ? "flex-start" : "center", gap: 14, flexWrap: isMobile ? "wrap" : "nowrap" }}>
+                      <div style={{ width: 42, height: 42, borderRadius: "50%", background: COLORS.lightMint, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Josefin Sans', sans-serif", fontSize: 13, fontWeight: 700, color: COLORS.green, flexShrink: 0 }}>
+                        {getInitials(appt.service)}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                          <p style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.navy, margin: 0 }}>{appt.service}</p>
+                          <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: st.bg, color: st.color, border: `1px solid ${st.border}`, fontFamily: "'Josefin Sans', sans-serif" }}>{st.label}</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 12, color: COLORS.navyMid }}>{date} · {time}</span>
+                          {appt.doctor_name && <span style={{ fontSize: 12, color: COLORS.navyMid }}>Dr. {appt.doctor_name}</span>}
+                        </div>
+                      </div>
+                      {canAct && (
+                        <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap", marginLeft: isMobile ? 50 : 0, width: isMobile ? "100%" : "auto" }}>
+                          <button onClick={() => router.push(`/patient/book?reschedule=${appt.id}`)}
+                            style={{ padding: "7px 12px", borderRadius: 8, border: `1px solid ${COLORS.border}`, background: COLORS.white, color: COLORS.navy, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", touchAction: "manipulation" }}
+                          >Reschedule</button>
+                          <button onClick={() => setConfirmModal({ id: appt.id, name: appt.service })} disabled={cancelling === appt.id}
+                            style={{ padding: "7px 12px", borderRadius: 8, border: "1px solid #FECACA", background: "#FEF2F2", color: "#B91C1C", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", touchAction: "manipulation" }}
+                          >Cancel</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {confirmModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => setConfirmModal(null)}>
+          <div style={{ background: COLORS.white, borderRadius: 20, padding: "2rem", maxWidth: 360, width: "100%", animation: "slideIn 0.2s ease" }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1rem", fontSize: 22 }}>✕</div>
+            <h3 style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 17, fontWeight: 700, color: COLORS.navy, textAlign: "center", marginBottom: 8 }}>Cancel Appointment?</h3>
+            <p style={{ fontSize: 13, color: COLORS.navyMid, textAlign: "center", lineHeight: 1.6, marginBottom: 20 }}>This will cancel your <strong>{confirmModal.name}</strong> appointment. This cannot be undone.</p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setConfirmModal(null)} style={{ flex: 1, padding: "12px", borderRadius: 10, border: `1px solid ${COLORS.border}`, background: "transparent", color: COLORS.navyMid, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", touchAction: "manipulation" }}>Go Back</button>
+              <button onClick={() => handleCancel(confirmModal.id)} style={{ flex: 1, padding: "12px", borderRadius: 10, border: "none", background: "#B91C1C", color: "white", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", touchAction: "manipulation" }}>Yes, Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div style={{ position: "fixed", bottom: isMobile ? 80 : 32, left: "50%", transform: "translateX(-50%)", background: COLORS.navy, color: "white", padding: "12px 24px", borderRadius: 12, fontSize: 13, fontFamily: "'Josefin Sans', sans-serif", fontWeight: 600, zIndex: 300, animation: "slideIn 0.25s ease", boxShadow: "0 8px 30px rgba(0,0,0,0.2)", whiteSpace: "nowrap" }}>
+          {toast}
         </div>
       )}
     </div>
   );
 }
 
-// ─────────────────────────────────────────────
-// Page
-// ─────────────────────────────────────────────
-
-export default function AppointmentsPage() {
-  const { user, logout } = useAuth();
-  const router = useRouter();
-
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [cancelling, setCancelling] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<FilterTab>("upcoming");
-
-  useEffect(() => {
-    api.get("/appointments")
-      .then((res) => setAppointments(res.data))
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const handleCancel = async (id: number) => {
-    if (!confirm("Are you sure you want to cancel this appointment?")) return;
-    setCancelling(id);
-    try {
-      await api.delete(`/appointments/${id}`);
-      setAppointments((prev) =>
-        prev.map((a) => (a.id === id ? { ...a, status: "cancelled" } : a))
-      );
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setCancelling(null);
-    }
-  };
-
-  const handleReschedule = (id: number) => {
-    router.push(`/patient/book?reschedule=${id}`);
-  };
-
-  const handleUpload = (id: number) => {
-    router.push(`/patient/upload?appointmentId=${id}`);
-  };
-
-  const filtered = filterAppointments(appointments, activeTab);
-  const grouped  = groupByDate(filtered);
-  const sortedDates = Object.keys(grouped).sort();
-
-  // Tab counts
-  const counts: Record<FilterTab, number> = {
-    upcoming:  filterAppointments(appointments, "upcoming").length,
-    pending:   filterAppointments(appointments, "pending").length,
-    past:      filterAppointments(appointments, "past").length,
-    cancelled: filterAppointments(appointments, "cancelled").length,
-  };
-
+export default function PatientAppointmentsPage() {
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.offWhite, fontFamily: "'DM Sans', 'Inter', sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap');
-        @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-        .tab-btn:hover:not(.tab-active) { color: ${COLORS.navy} !important; background: ${COLORS.navyLight} !important; }
-        .nav-back:hover { color: ${COLORS.green} !important; }
-        .appt-row:hover { box-shadow: 0 4px 20px rgba(44,62,80,0.08) !important; }
-        .book-btn:hover { background: ${COLORS.green} !important; }
-      `}</style>
-
-      {/* ── NAVBAR ── */}
-      <nav style={{ position: "sticky", top: 0, zIndex: 50, background: COLORS.white, borderBottom: `1px solid ${COLORS.border}`, padding: "0 2rem", height: 62, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
-          <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 30, height: 30, borderRadius: "50%", background: COLORS.green, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 900, color: "white", fontFamily: "'Josefin Sans', sans-serif" }}>D</div>
-            <span style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 14, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: COLORS.navy }}>DentAI</span>
-          </Link>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: COLORS.navyMid }}>
-            <span style={{ color: COLORS.green, fontWeight: 600 }}>Patient Portal</span>
-            <span style={{ opacity: 0.35 }}>›</span>
-            <span>My Appointments</span>
-          </div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
-          <Link href="/patient/dashboard" className="nav-back" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: COLORS.navyMid, textDecoration: "none", fontWeight: 500, transition: "color 0.15s" }}>
-            <ArrowLeftIcon /> Dashboard
-          </Link>
-          <button onClick={logout} style={{ fontSize: 12, fontWeight: 500, color: "#A32D2D", background: "#FEECEC", border: "none", borderRadius: 8, padding: "7px 14px", cursor: "pointer", fontFamily: "inherit" }}>
-            Logout
-          </button>
-        </div>
-      </nav>
-
-      <div style={{ maxWidth: 860, margin: "0 auto", padding: "2.5rem 1.5rem 5rem" }}>
-
-        {/* ── HEADER ── */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem", marginBottom: "2rem", animation: "fadeUp 0.35s ease" }}>
-          <div>
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: COLORS.green, fontFamily: "'Josefin Sans', sans-serif", marginBottom: 8 }}>
-              Patient Portal
-            </p>
-            <h1 style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 28, fontWeight: 700, color: COLORS.navy, marginBottom: 6 }}>
-              My Appointments
-            </h1>
-            <p style={{ fontSize: 14, color: COLORS.navyMid }}>
-              View, manage and upload documents for your bookings.
-            </p>
-          </div>
-          <button
-            className="book-btn"
-            onClick={() => router.push("/patient/book")}
-            style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "0.05em", padding: "12px 24px", background: COLORS.navy, color: "white", border: "none", borderRadius: 10, cursor: "pointer", transition: "background 0.15s", flexShrink: 0 }}
-          >
-            + Book New
-          </button>
-        </div>
-
-        {/* ── FILTER TABS ── */}
-        <div style={{ display: "flex", gap: 4, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 5, marginBottom: "2rem", width: "fit-content" }}>
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                className={`tab-btn ${activeTab === tab.id ? "tab-active" : ""}`}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 7,
-                  padding: "8px 16px",
-                  borderRadius: 9,
-                  border: "none",
-                  background: isActive ? COLORS.navy : "transparent",
-                  color: isActive ? "white" : COLORS.navyMid,
-                  fontSize: 13, fontWeight: isActive ? 700 : 500,
-                  fontFamily: "'Josefin Sans', sans-serif",
-                  cursor: "pointer", transition: "all 0.15s",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                {tab.label}
-                {counts[tab.id] > 0 && (
-                  <span style={{
-                    fontSize: 10, fontWeight: 700,
-                    padding: "1px 6px", borderRadius: 20,
-                    background: isActive ? "rgba(255,255,255,0.2)" : COLORS.navyLight,
-                    color: isActive ? "white" : COLORS.navyMid,
-                  }}>
-                    {counts[tab.id]}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* ── CONTENT ── */}
-        {loading ? (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "5rem 0", gap: 12 }}>
-            <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2.5px solid ${COLORS.lightMint}`, borderTopColor: COLORS.green, animation: "spin 0.7s linear infinite" }} />
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-            <span style={{ fontSize: 14, color: COLORS.navyMid }}>Loading appointments…</span>
-          </div>
-        ) : sortedDates.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "5rem 0", animation: "fadeUp 0.3s ease" }}>
-            <div style={{ width: 56, height: 56, borderRadius: "50%", background: COLORS.lightMint, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.25rem" }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={COLORS.green} strokeWidth="1.8" strokeLinecap="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" />
-                <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-            </div>
-            <p style={{ fontSize: 15, fontWeight: 500, color: COLORS.navy, marginBottom: 6 }}>No {activeTab} appointments</p>
-            <p style={{ fontSize: 13, color: COLORS.navyMid, marginBottom: 20 }}>
-              {activeTab === "upcoming" ? "Book your first appointment to get started." : `Nothing here yet.`}
-            </p>
-            {activeTab === "upcoming" && (
-              <button
-                onClick={() => router.push("/patient/book")}
-                style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 13, fontWeight: 700, padding: "11px 26px", background: COLORS.navy, color: "white", border: "none", borderRadius: 10, cursor: "pointer" }}
-              >
-                Book an Appointment
-              </button>
-            )}
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "2rem", animation: "fadeUp 0.3s ease" }}>
-            {sortedDates.map((isoDate) => {
-              const dayAppts = grouped[isoDate];
-              const sample   = parseDate(dayAppts[0].datetime);
-              const todayMark = isToday(dayAppts[0].datetime);
-
-              return (
-                <div key={isoDate}>
-                  {/* Month header — show when month changes */}
-                  <p style={{ fontSize: 12, fontWeight: 700, color: COLORS.navyMid, textTransform: "uppercase", letterSpacing: "0.12em", fontFamily: "'Josefin Sans', sans-serif", marginBottom: "0.85rem" }}>
-                    {sample.monthYear}
-                  </p>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {dayAppts.map((appt, idx) => {
-                      const dt      = parseDate(appt.datetime);
-                      const meta    = SERVICE_META[appt.service] ?? { accent: COLORS.green, bg: COLORS.lightMint };
-                      const statusM = STATUS_META[appt.status]   ?? { bg: COLORS.navyLight, color: COLORS.navyMid, label: appt.status };
-                      const canAct  = appt.status !== "cancelled" && appt.status !== "completed";
-
-                      return (
-                        <div
-                          key={appt.id}
-                          className="appt-row"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 0,
-                            background: COLORS.white,
-                            border: `1px solid ${COLORS.border}`,
-                            borderRadius: 14,
-                            transition: "box-shadow 0.15s",
-                          }}
-                        >
-                          {/* Left: Date block */}
-                          <div style={{
-                            width: 80, flexShrink: 0,
-                            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                            padding: "1.25rem 0",
-                            borderRight: `1px solid ${COLORS.border}`,
-                            background: todayMark && idx === 0 ? COLORS.lightMint : "transparent",
-                          }}>
-                            <span style={{
-                              fontFamily: "'Josefin Sans', sans-serif",
-                              fontSize: 11, fontWeight: 700,
-                              textTransform: "uppercase", letterSpacing: "0.1em",
-                              color: todayMark ? COLORS.green : COLORS.navyMid,
-                              marginBottom: 4,
-                            }}>
-                              {dt.dayName}
-                            </span>
-                            <span style={{
-                              fontFamily: "'Josefin Sans', sans-serif",
-                              fontSize: 30, fontWeight: 700, lineHeight: 1,
-                              color: todayMark ? COLORS.green : COLORS.navy,
-                            }}>
-                              {dt.day}
-                            </span>
-                          </div>
-
-                          {/* Middle: appointment info */}
-                          <div style={{ flex: 1, padding: "1.1rem 1.25rem", minWidth: 0 }}>
-                            {/* Service name + status + via-call badge */}
-                            <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 6 }}>
-                              {/* Service accent dot */}
-                              <div style={{ width: 8, height: 8, borderRadius: "50%", background: meta.accent, flexShrink: 0 }} />
-                              <span style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.navy }}>
-                                {appt.service}
-                              </span>
-                              <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, textTransform: "uppercase", letterSpacing: "0.4px", background: statusM.bg, color: statusM.color }}>
-                                {statusM.label}
-                              </span>
-                              {appt.booked_via === "phone" && (
-                                <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20, background: "#F3EEFF", color: "#6B46B0" }}>
-                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 5.55 5.55l.97-.97a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-                                  </svg>
-                                  via call
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Time + doctor */}
-                            <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                              <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: COLORS.navyMid }}>
-                                <ClockIcon /> {dt.time}
-                              </span>
-                              {appt.doctor_name && (
-                                <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: COLORS.navyMid }}>
-                                  <StethoscopeIcon /> {appt.doctor_name}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Right: actions */}
-                          <div style={{ padding: "0 1.25rem", flexShrink: 0 }}>
-                            {canAct ? (
-                              <ActionMenu
-                                appt={appt}
-                                onCancel={handleCancel}
-                                onReschedule={handleReschedule}
-                                onUpload={handleUpload}
-                                cancelling={cancelling}
-                              />
-                            ) : (
-                              <span style={{ fontSize: 12, color: COLORS.navyMid, fontStyle: "italic" }}>
-                                {appt.status === "completed" ? "Completed" : "Cancelled"}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
+    <Suspense fallback={<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F7F9F8" }}><div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid #E6F7F2", borderTopColor: "#3EB489" }} /></div>}>
+      <AppointmentsContent />
+    </Suspense>
   );
 }
