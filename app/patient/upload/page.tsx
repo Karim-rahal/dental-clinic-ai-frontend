@@ -76,7 +76,13 @@ function UploadContent() {
 
   const [appointments,  setAppointments]  = useState<Appointment[]>([]);
   const [selectedId,    setSelectedId]    = useState<number | null>(null);
-  const [uploaded,      setUploaded]      = useState<UploadMap>({});
+ const [uploaded, setUploaded] = useState<UploadMap>(() => {
+  if (typeof window === "undefined") return {};
+  try {
+    const saved = localStorage.getItem(`uploads_${user?.id}`);
+    return saved ? JSON.parse(saved) : {};
+  } catch { return {}; }
+});
   const [loading,       setLoading]       = useState(true);
   const [submitting,    setSubmitting]    = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -89,8 +95,20 @@ function UploadContent() {
 
   useEffect(() => {
     api.get("/appointments").then((r) => {
-      const appts: Appointment[] = r.data;
-      setAppointments(appts);
+  const appts: Appointment[] = r.data.filter(
+    (a: Appointment) => a.status !== "cancelled"
+  );
+  setAppointments(appts);
+  // Remove uploaded files for appointments no longer in the list
+setUploaded((prev) => {
+  const validIds = new Set(appts.map((a) => String(a.id)));
+  const cleaned: UploadMap = {};
+  Object.keys(prev).forEach((key) => {
+    const apptId = key.split("_")[0];
+    if (validIds.has(apptId)) cleaned[key] = prev[key];
+  });
+  return cleaned;
+});
       const targetId = searchParams.get("appointmentId") ? parseInt(searchParams.get("appointmentId")!, 10) : appts[0]?.id ?? null;
       setSelectedId(targetId);
     }).catch((err) => {
@@ -98,6 +116,12 @@ function UploadContent() {
       else setError("Failed to load appointments.");
     }).finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+  if (!user?.id) return;
+  try {
+    localStorage.setItem(`uploads_${user.id}`, JSON.stringify(uploaded));
+  } catch {}
+}, [uploaded, user?.id]);
 
   const selectedAppt = appointments.find((a) => a.id === selectedId) ?? null;
   const sections: DocSection[] = selectedAppt ? (SERVICE_DOCS[selectedAppt.service] ?? []) : [];
