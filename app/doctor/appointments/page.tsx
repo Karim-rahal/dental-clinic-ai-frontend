@@ -57,31 +57,22 @@ function useBreakpoint() {
 
 function NavIcon({ d }: { d: string }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d={d} />
     </svg>
   );
 }
 
-function CalIcon() { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>; }
-function ClockIcon() { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>; }
-function PhoneIcon() { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.82a16 16 0 0 0 6.29 6.29l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>; }
-function CheckCircleIcon() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>; }
-function XCircleIcon() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>; }
-function SearchIcon() { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>; }
-
-function formatTime(dt: string) { return new Date(dt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }); }
-function formatDate(dt: string) { return new Date(dt).toLocaleDateString("en-US", { weekday: "short", year: "numeric", month: "short", day: "numeric" }); }
 function getInitials(name: string) { return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase(); }
+function formatTime(dt: string) { return new Date(dt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }); }
+function formatDate(dt: string) { return new Date(dt).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }); }
 
-function Sidebar({ activeNav, isMobile, isTablet, logout, router, mobileMenuOpen, setMobileMenuOpen }: {
-  activeNav: string; isMobile: boolean; isTablet: boolean;
+function Sidebar({ isMobile, isTablet, logout, router, mobileMenuOpen, setMobileMenuOpen }: {
+  isMobile: boolean; isTablet: boolean;
   logout: () => void; router: ReturnType<typeof useRouter>;
   mobileMenuOpen: boolean; setMobileMenuOpen: (v: boolean) => void;
 }) {
   const sidebarWidth = isTablet ? 64 : 220;
-  const todayAppts = 0;
-
   return (
     <>
       {isMobile && (
@@ -95,25 +86,21 @@ function Sidebar({ activeNav, isMobile, isTablet, logout, router, mobileMenuOpen
           <div style={{ width: 40 }} />
         </div>
       )}
-
       {isMobile && mobileMenuOpen && (
         <>
           <div onClick={() => setMobileMenuOpen(false)} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(44,62,80,0.4)", zIndex: 55, top: 56 }} />
           <div style={{ position: "fixed", top: 56, left: 0, right: 0, backgroundColor: COLORS.white, zIndex: 56, borderBottom: `1px solid ${COLORS.mint}`, padding: "12px 16px", boxShadow: "0 8px 24px rgba(44,62,80,0.12)", animation: "slideIn 0.2s ease" }}>
             {NAV_ITEMS.map((item) => (
               <button key={item.id} onClick={() => { router.push(item.path); setMobileMenuOpen(false); }}
-                style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "13px 14px", borderRadius: 12, border: "none", cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", backgroundColor: activeNav === item.id ? COLORS.lightMint : "transparent", color: activeNav === item.id ? COLORS.green : COLORS.navyMid, fontSize: 14, fontWeight: activeNav === item.id ? 700 : 500, marginBottom: 4, touchAction: "manipulation" }}
-              >
-                <NavIcon d={item.icon} />{item.label}
-              </button>
+                style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "13px 14px", borderRadius: 12, border: "none", cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", backgroundColor: item.id === "appointments" ? COLORS.lightMint : "transparent", color: item.id === "appointments" ? COLORS.green : COLORS.navyMid, fontSize: 14, fontWeight: item.id === "appointments" ? 700 : 500, marginBottom: 4, touchAction: "manipulation" }}
+              ><NavIcon d={item.icon} />{item.label}</button>
             ))}
             <div style={{ borderTop: `1px solid ${COLORS.mint}`, marginTop: 8, paddingTop: 8 }}>
-              <button onClick={() => { logout(); router.push("/"); }} style={{ width: "100%", padding: "12px 14px", backgroundColor: "transparent", color: "#e05555", border: "1px solid rgba(224,85,85,0.3)", borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", touchAction: "manipulation" }}>Sign Out</button>
+              <button onClick={() => { logout(); router.push("/"); }} style={{ width: "100%", padding: "12px 14px", backgroundColor: "transparent", color: "#e05555", border: "1px solid rgba(224,85,85,0.3)", borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif" }}>Sign Out</button>
             </div>
           </div>
         </>
       )}
-
       {!isMobile && (
         <div style={{ width: sidebarWidth, backgroundColor: COLORS.white, borderRight: "1px solid rgba(167,228,216,0.3)", display: "flex", flexDirection: "column", position: "fixed", top: 0, bottom: 0, left: 0, zIndex: 50, boxShadow: "2px 0 20px rgba(44,62,80,0.04)", transition: "width 0.2s ease", overflow: "hidden" }}>
           <div style={{ padding: isTablet ? "24px 0" : "24px 20px 20px", borderBottom: "1px solid rgba(167,228,216,0.3)", display: "flex", alignItems: "center", justifyContent: isTablet ? "center" : "flex-start", gap: 10 }}>
@@ -124,13 +111,10 @@ function Sidebar({ activeNav, isMobile, isTablet, logout, router, mobileMenuOpen
             {!isTablet && <div style={{ fontSize: 9, fontWeight: 700, color: COLORS.navyMid, letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 8, paddingLeft: 8, fontFamily: "'Josefin Sans', sans-serif" }}>Doctor Portal</div>}
             {NAV_ITEMS.map((item) => (
               <button key={item.id} onClick={() => router.push(item.path)} title={isTablet ? item.label : undefined}
-                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: isTablet ? "center" : "flex-start", gap: isTablet ? 0 : 10, padding: isTablet ? "12px 0" : "10px 12px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", backgroundColor: activeNav === item.id ? COLORS.lightMint : "transparent", color: activeNav === item.id ? COLORS.green : COLORS.navyMid, fontSize: 12, fontWeight: activeNav === item.id ? 700 : 500, marginBottom: 2, transition: "all 0.15s" }}
-                onMouseEnter={(e) => { if (activeNav !== item.id) e.currentTarget.style.backgroundColor = "#F8FFFE"; }}
-                onMouseLeave={(e) => { if (activeNav !== item.id) e.currentTarget.style.backgroundColor = "transparent"; }}
-              >
-                <NavIcon d={item.icon} />
-                {!isTablet && item.label}
-              </button>
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: isTablet ? "center" : "flex-start", gap: isTablet ? 0 : 10, padding: isTablet ? "12px 0" : "10px 12px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", backgroundColor: item.id === "appointments" ? COLORS.lightMint : "transparent", color: item.id === "appointments" ? COLORS.green : COLORS.navyMid, fontSize: 12, fontWeight: item.id === "appointments" ? 700 : 500, marginBottom: 2, transition: "all 0.15s" }}
+                onMouseEnter={(e) => { if (item.id !== "appointments") e.currentTarget.style.backgroundColor = "#F8FFFE"; }}
+                onMouseLeave={(e) => { if (item.id !== "appointments") e.currentTarget.style.backgroundColor = "transparent"; }}
+              ><NavIcon d={item.icon} />{!isTablet && item.label}</button>
             ))}
           </div>
           {!isTablet && (
@@ -139,7 +123,6 @@ function Sidebar({ activeNav, isMobile, isTablet, logout, router, mobileMenuOpen
                 <div style={{ position: "absolute", width: 80, height: 80, borderRadius: "50%", backgroundColor: COLORS.green, opacity: 0.15, bottom: -20, right: -20, pointerEvents: "none" }} />
                 <div style={{ position: "relative", zIndex: 1 }}>
                   <div style={{ fontSize: 9, color: "rgba(167,228,216,0.7)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8, fontFamily: "'Josefin Sans', sans-serif" }}>Your Schedule.</div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginBottom: 12, lineHeight: 1.5 }}>{todayAppts} appointments today.</div>
                   <button onClick={() => router.push("/doctor/appointments")} style={{ width: "100%", padding: 8, backgroundColor: COLORS.green, color: "white", border: "none", borderRadius: 8, fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif" }}>View All →</button>
                 </div>
               </div>
@@ -157,15 +140,14 @@ function Sidebar({ activeNav, isMobile, isTablet, logout, router, mobileMenuOpen
           </div>
         </div>
       )}
-
       {isMobile && (
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 64, backgroundColor: COLORS.white, borderTop: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "space-around", zIndex: 60, boxShadow: "0 -2px 12px rgba(44,62,80,0.08)" }}>
           {NAV_ITEMS.map((item) => (
             <button key={item.id} onClick={() => router.push(item.path)}
-              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", color: activeNav === item.id ? COLORS.green : COLORS.navyMid, fontFamily: "inherit", padding: "8px 10px", borderRadius: 10, touchAction: "manipulation", minWidth: 44, minHeight: 44 }}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", color: item.id === "appointments" ? COLORS.green : COLORS.navyMid, fontFamily: "inherit", padding: "8px 6px", borderRadius: 10, touchAction: "manipulation", minWidth: 44, minHeight: 44 }}
             >
               <NavIcon d={item.icon} />
-              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.04em", fontFamily: "'Josefin Sans', sans-serif" }}>{item.label.split(" ")[0]}</span>
+              <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.04em", fontFamily: "'Josefin Sans', sans-serif" }}>{item.label.split(" ")[0]}</span>
             </button>
           ))}
         </div>
@@ -247,7 +229,7 @@ function DoctorAppointmentsContent() {
         .appt-row:hover { background: #F8FFFE !important; }
       `}</style>
 
-      <Sidebar activeNav="appointments" isMobile={isMobile} isTablet={isTablet} logout={logout} router={router} mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <Sidebar isMobile={isMobile} isTablet={isTablet} logout={logout} router={router} mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
 
       <div style={{ flex: 1, marginLeft: isMobile ? 0 : sidebarWidth, paddingTop: isMobile ? 56 : 0, paddingBottom: isMobile ? 72 : 0, minWidth: 0 }}>
         <div style={{ maxWidth: 900, margin: "0 auto", padding: isMobile ? "1.25rem 1rem 5rem" : "2rem 1.5rem 5rem" }}>
@@ -258,22 +240,23 @@ function DoctorAppointmentsContent() {
             <p style={{ fontSize: 14, color: COLORS.navyMid }}>{appointments.length} total appointments</p>
           </div>
 
-          <div style={{ display: "flex", gap: 12, marginBottom: "1.5rem", flexWrap: "wrap", animation: "fadeUp 0.35s ease" }}>
-            <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
-              <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: COLORS.navyMid }}><SearchIcon /></span>
-              <input type="text" placeholder="Search patient or service…" value={search} onChange={(e) => setSearch(e.target.value)}
-                style={{ width: "100%", padding: "11px 14px 11px 38px", borderRadius: 10, border: `1px solid ${COLORS.border}`, background: COLORS.white, fontSize: 13, color: COLORS.navy, fontFamily: "inherit", outline: "none" }} />
-            </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {FILTERS.map((f) => (
-                <button key={f} onClick={() => setFilter(f)}
-                  style={{ padding: "9px 14px", borderRadius: 10, border: `1px solid ${filter === f ? COLORS.navy : COLORS.border}`, background: filter === f ? COLORS.navy : COLORS.white, color: filter === f ? "white" : COLORS.navyMid, fontSize: 12, fontWeight: 600, fontFamily: "'Josefin Sans', sans-serif", cursor: "pointer", letterSpacing: "0.04em", textTransform: "capitalize", display: "flex", alignItems: "center", gap: 6, transition: "all 0.15s", touchAction: "manipulation" }}
-                >
-                  {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
-                  <span style={{ background: filter === f ? "rgba(255,255,255,0.2)" : COLORS.navyLight, borderRadius: 20, padding: "1px 7px", fontSize: 11 }}>{counts[f]}</span>
-                </button>
-              ))}
-            </div>
+          {/* Filter pills - scrollable on mobile */}
+          <div style={{ display: "flex", gap: 4, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 5, marginBottom: "1.25rem", width: "fit-content", maxWidth: "100%", overflowX: "auto", animation: "fadeUp 0.32s ease" }}>
+            {FILTERS.map((f) => (
+              <button key={f} onClick={() => setFilter(f)}
+                style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 9, border: "none", background: filter === f ? COLORS.navy : "transparent", color: filter === f ? "white" : COLORS.navyMid, fontSize: 12, fontWeight: filter === f ? 700 : 500, fontFamily: "'Josefin Sans', sans-serif", cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap", touchAction: "manipulation" }}
+              >
+                {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+                {counts[f] > 0 && <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 20, background: filter === f ? "rgba(255,255,255,0.2)" : COLORS.navyLight, color: filter === f ? "white" : COLORS.navyMid }}>{counts[f]}</span>}
+              </button>
+            ))}
+          </div>
+
+          {/* Search */}
+          <div style={{ position: "relative", marginBottom: "1.5rem", animation: "fadeUp 0.35s ease" }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={COLORS.navyMid} strokeWidth="1.8" strokeLinecap="round" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Search patient or service…" value={search} onChange={(e) => setSearch(e.target.value)}
+              style={{ width: "100%", padding: "11px 14px 11px 38px", borderRadius: 10, border: `1px solid ${COLORS.border}`, background: COLORS.white, fontSize: 13, color: COLORS.navy, fontFamily: "inherit", outline: "none" }} />
           </div>
 
           {loading ? (
@@ -294,35 +277,42 @@ function DoctorAppointmentsContent() {
                 const canAct = appt.status !== "completed" && appt.status !== "cancelled";
                 return (
                   <div key={appt.id} className="appt-row"
-                    style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: isMobile ? "0.9rem 1rem" : "1rem 1.25rem", display: "flex", alignItems: isMobile ? "flex-start" : "center", gap: 14, animation: `fadeUp ${0.05 + i * 0.04}s ease`, position: "relative", overflow: "hidden", flexWrap: isMobile ? "wrap" : "nowrap" }}
+                    style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 14, overflow: "hidden", animation: `fadeUp ${0.05 + i * 0.04}s ease`, position: "relative" }}
                   >
                     <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: st.color, borderRadius: "14px 0 0 14px" }} />
-                    <div style={{ width: 42, height: 42, borderRadius: "50%", background: COLORS.lightMint, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Josefin Sans', sans-serif", fontSize: 13, fontWeight: 700, color: COLORS.green, flexShrink: 0, marginLeft: 8 }}>
-                      {getInitials(appt.patient_name)}
+                    <div style={{ padding: isMobile ? "14px 14px 14px 18px" : "16px 20px 16px 22px", display: "flex", alignItems: isMobile ? "flex-start" : "center", gap: 14, flexWrap: isMobile ? "wrap" : "nowrap" }}>
+                      <div style={{ width: 42, height: 42, borderRadius: "50%", background: COLORS.lightMint, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Josefin Sans', sans-serif", fontSize: 13, fontWeight: 700, color: COLORS.green, flexShrink: 0 }}>
+                        {getInitials(appt.patient_name)}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                          <p style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.navy, margin: 0 }}>{appt.patient_name}</p>
+                          <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: st.bg, color: st.color, border: `1px solid ${st.border}`, fontFamily: "'Josefin Sans', sans-serif" }}>{st.label}</span>
+                        </div>
+                        <p style={{ fontSize: 13, color: COLORS.navy, marginBottom: 4 }}>{appt.service}</p>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 12, color: COLORS.navyMid }}>{formatDate(appt.datetime)} · {formatTime(appt.datetime)}</span>
+                          {appt.phone_number && <span style={{ fontSize: 12, color: COLORS.navyMid }}>{appt.phone_number}</span>}
+                        </div>
+                      </div>
+                      {canAct && (
+                        <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap", marginLeft: isMobile ? 50 : 0, width: isMobile ? "100%" : "auto" }}>
+                          <button disabled={!!actionLoading} onClick={() => setConfirmModal({ id: appt.id, action: "completed", name: appt.patient_name })}
+                            style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 12px", borderRadius: 8, border: "1px solid #BBF7D0", background: "#F0FDF4", color: "#15803D", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", touchAction: "manipulation" }}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            Done
+                          </button>
+                          <button disabled={!!actionLoading} onClick={() => setConfirmModal({ id: appt.id, action: "cancelled", name: appt.patient_name })}
+                            style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 12px", borderRadius: 8, border: "1px solid #FECACA", background: "#FEF2F2", color: "#B91C1C", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", touchAction: "manipulation" }}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                      {actionLoading === appt.id && <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${COLORS.lightMint}`, borderTopColor: COLORS.green, animation: "spin 0.7s linear infinite", flexShrink: 0 }} />}
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-                        <p style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.navy, margin: 0 }}>{appt.patient_name}</p>
-                        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: st.bg, color: st.color, border: `1px solid ${st.border}`, fontFamily: "'Josefin Sans', sans-serif" }}>{st.label}</span>
-                      </div>
-                      <p style={{ fontSize: 13, color: COLORS.navy, marginBottom: 4 }}>{appt.service}</p>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                        <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: COLORS.navyMid }}><CalIcon /> {formatDate(appt.datetime)}</span>
-                        <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: COLORS.navyMid }}><ClockIcon /> {formatTime(appt.datetime)}</span>
-                        {appt.phone_number && <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: COLORS.navyMid }}><PhoneIcon /> {appt.phone_number}</span>}
-                      </div>
-                    </div>
-                    {canAct && (
-                      <div style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap", marginLeft: isMobile ? 50 : 0, width: isMobile ? "100%" : "auto" }}>
-                        <button disabled={!!actionLoading} onClick={() => setConfirmModal({ id: appt.id, action: "completed", name: appt.patient_name })}
-                          style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 12px", borderRadius: 8, border: "1px solid #BBF7D0", background: "#F0FDF4", color: "#15803D", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", touchAction: "manipulation" }}
-                        ><CheckCircleIcon /> Done</button>
-                        <button disabled={!!actionLoading} onClick={() => setConfirmModal({ id: appt.id, action: "cancelled", name: appt.patient_name })}
-                          style={{ display: "flex", alignItems: "center", gap: 5, padding: "8px 12px", borderRadius: 8, border: "1px solid #FECACA", background: "#FEF2F2", color: "#B91C1C", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", touchAction: "manipulation" }}
-                        ><XCircleIcon /> Cancel</button>
-                      </div>
-                    )}
-                    {actionLoading === appt.id && <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${COLORS.lightMint}`, borderTopColor: COLORS.green, animation: "spin 0.7s linear infinite", flexShrink: 0 }} />}
                   </div>
                 );
               })}
@@ -331,6 +321,7 @@ function DoctorAppointmentsContent() {
         </div>
       </div>
 
+      {/* Confirm Modal */}
       {confirmModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => setConfirmModal(null)}>
           <div style={{ background: COLORS.white, borderRadius: 20, padding: "2rem", maxWidth: 360, width: "100%", animation: "slideIn 0.2s ease" }} onClick={(e) => e.stopPropagation()}>
@@ -353,6 +344,7 @@ function DoctorAppointmentsContent() {
         </div>
       )}
 
+      {/* Toast */}
       {toast && (
         <div style={{ position: "fixed", bottom: isMobile ? 80 : 32, left: "50%", transform: "translateX(-50%)", background: COLORS.navy, color: "white", padding: "12px 24px", borderRadius: 12, fontSize: 13, fontFamily: "'Josefin Sans', sans-serif", fontWeight: 600, zIndex: 300, animation: "slideIn 0.25s ease", boxShadow: "0 8px 30px rgba(0,0,0,0.2)", whiteSpace: "nowrap" }}>
           {toast}

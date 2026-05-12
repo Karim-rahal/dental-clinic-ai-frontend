@@ -37,14 +37,14 @@ function useBreakpoint() {
 }
 
 function NavIcon({ d }: { d: string }) {
-  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>;
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>;
 }
 
 function EyeIcon() { return <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>; }
 function EyeOffIcon() { return <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>; }
 
 function validateName(name: string) { if (!name.trim()) return "Full name is required."; if (name.trim().length < 2) return "Name must be at least 2 characters."; return ""; }
-function validatePhone(phone: string) { if (!phone.trim()) return ""; const cleaned = phone.replace(/\s/g, ""); return /^(\+?961|0)?[0-9]{8}$/.test(cleaned) ? "" : "Enter a valid phone number (e.g. +961 70 000 000)."; }
+function validatePhone(phone: string) { if (!phone.trim()) return ""; const cleaned = phone.replace(/\s/g, ""); return /^(\+?961|0)?[0-9]{8}$/.test(cleaned) ? "" : "Enter a valid phone number."; }
 function validateNewPassword(pw: string) { if (!pw) return "New password is required."; if (pw.length < 6) return "Password must be at least 6 characters."; return ""; }
 
 function PasswordInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
@@ -56,8 +56,8 @@ function PasswordInput({ value, onChange, placeholder }: { value: string; onChan
         onFocus={(e) => (e.target.style.borderColor = COLORS.green)}
         onBlur={(e) => (e.target.style.borderColor = COLORS.border)}
       />
-      <button type="button" onMouseDown={(e) => e.preventDefault()} onTouchStart={(e) => e.preventDefault()} onClick={() => setShow((p) => !p)}
-        style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: COLORS.navyMid, padding: 4, display: "flex", alignItems: "center" }}
+      <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => setShow((p) => !p)}
+        style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: COLORS.navyMid, padding: 4, display: "flex", alignItems: "center", touchAction: "manipulation" }}
       >{show ? <EyeOffIcon /> : <EyeIcon />}</button>
     </div>
   );
@@ -139,10 +139,10 @@ function Sidebar({ isMobile, isTablet, logout, router, mobileMenuOpen, setMobile
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 64, backgroundColor: COLORS.white, borderTop: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "space-around", zIndex: 60, boxShadow: "0 -2px 12px rgba(44,62,80,0.08)" }}>
           {NAV_ITEMS.map((item) => (
             <button key={item.id} onClick={() => router.push(item.path)}
-              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", color: item.id === "profile" ? COLORS.green : COLORS.navyMid, fontFamily: "inherit", padding: "8px 10px", borderRadius: 10, touchAction: "manipulation", minWidth: 44, minHeight: 44 }}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", color: item.id === "profile" ? COLORS.green : COLORS.navyMid, fontFamily: "inherit", padding: "8px 6px", borderRadius: 10, touchAction: "manipulation", minWidth: 44, minHeight: 44 }}
             >
               <NavIcon d={item.icon} />
-              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.04em", fontFamily: "'Josefin Sans', sans-serif" }}>{item.label.split(" ")[0]}</span>
+              <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.04em", fontFamily: "'Josefin Sans', sans-serif" }}>{item.label.split(" ")[0]}</span>
             </button>
           ))}
         </div>
@@ -158,9 +158,8 @@ export default function DoctorProfilePage() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab]           = useState<"info" | "password">("info");
-  const [photoUrl, setPhotoUrl] = useState<string | null>(() =>
-  typeof window === "undefined" ? null : localStorage.getItem("doctor_photo")
-);
+  const [photoUrl, setPhotoUrl]             = useState<string | null>(() => typeof window !== "undefined" ? localStorage.getItem("doctor_photo") : null);
+
   const [infoForm, setInfoForm]             = useState({ full_name: user?.full_name || "", phone_number: user?.phone_number || "" });
   const [infoFieldErrors, setInfoFieldErrors] = useState({ full_name: "", phone_number: "" });
   const [infoLoading, setInfoLoading]       = useState(false);
@@ -174,7 +173,6 @@ export default function DoctorProfilePage() {
   const [pwError, setPwError]               = useState("");
 
   const sidebarWidth = isTablet ? 64 : 220;
-
   const getInitials = (name: string) => name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -207,13 +205,12 @@ export default function DoctorProfilePage() {
     const confirmErr = pwForm.confirm_password !== pwForm.new_password ? "Passwords do not match." : "";
     setPwFieldErrors({ current_password: currentErr, new_password: newErr, confirm_password: confirmErr });
     if (currentErr || newErr || confirmErr) return;
-    if (pwForm.new_password === pwForm.current_password) { setPwFieldErrors((e) => ({ ...e, new_password: "New password must differ from your current one." })); return; }
+    if (pwForm.new_password === pwForm.current_password) { setPwFieldErrors((e) => ({ ...e, new_password: "New password must differ from current." })); return; }
     setPwError(""); setPwSuccess(""); setPwLoading(true);
     try {
       await api.post("/me/change-password", { current_password: pwForm.current_password, new_password: pwForm.new_password });
       setPwSuccess("Password changed successfully.");
       setPwForm({ current_password: "", new_password: "", confirm_password: "" });
-      setPwFieldErrors({ current_password: "", new_password: "", confirm_password: "" });
       setTimeout(() => setPwSuccess(""), 3000);
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -252,38 +249,41 @@ export default function DoctorProfilePage() {
       <div style={{ flex: 1, marginLeft: isMobile ? 0 : sidebarWidth, paddingTop: isMobile ? 56 : 0, paddingBottom: isMobile ? 72 : 0, minWidth: 0 }}>
         <div style={{ maxWidth: 680, margin: "0 auto", padding: isMobile ? "1.25rem 1rem 5rem" : "2.5rem 1.5rem 5rem" }}>
 
-          <div style={{ background: COLORS.navy, borderRadius: 20, padding: "2rem", marginBottom: "2rem", display: "flex", alignItems: "center", gap: "1.5rem", animation: "fadeUp 0.3s ease", position: "relative", overflow: "hidden", flexWrap: isMobile ? "wrap" : "nowrap" }}>
+          {/* Profile Hero Banner */}
+          <div style={{ background: COLORS.navy, borderRadius: 20, padding: isMobile ? "1.25rem" : "2rem", marginBottom: "2rem", display: "flex", alignItems: "center", gap: "1.5rem", animation: "fadeUp 0.3s ease", position: "relative", overflow: "hidden", flexWrap: isMobile ? "wrap" : "nowrap" }}>
             <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", background: COLORS.green, opacity: 0.08, right: -60, top: -60, pointerEvents: "none" }} />
             <div style={{ position: "relative", flexShrink: 0 }}>
-              <div style={{ width: 72, height: 72, borderRadius: "50%", background: COLORS.green, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", border: "3px solid rgba(255,255,255,0.15)", boxShadow: "0 8px 24px rgba(0,0,0,0.2)" }}>
-                {photoUrl ? <img src={photoUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 24, fontWeight: 900, color: "white" }}>{getInitials(user.full_name || "Dr")}</span>}
+              <div style={{ width: isMobile ? 60 : 72, height: isMobile ? 60 : 72, borderRadius: "50%", background: COLORS.green, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", border: "3px solid rgba(255,255,255,0.15)", boxShadow: "0 8px 24px rgba(0,0,0,0.2)" }}>
+                {photoUrl ? <img src={photoUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: isMobile ? 20 : 24, fontWeight: 900, color: "white" }}>{getInitials(user.full_name || "Dr")}</span>}
               </div>
               <label style={{ position: "absolute", bottom: -2, right: -2, width: 22, height: 22, borderRadius: "50%", background: COLORS.green, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", border: "2px solid white", fontSize: 11, touchAction: "manipulation" }}>
                 +<input type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhotoUpload} />
               </label>
             </div>
             <div style={{ flex: 1, zIndex: 1 }}>
-              <p style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: isMobile ? 18 : 22, fontWeight: 900, color: "white", marginBottom: 4 }}>{user.full_name}</p>
+              <p style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: isMobile ? 16 : 22, fontWeight: 900, color: "white", marginBottom: 4 }}>{user.full_name}</p>
               <p style={{ fontSize: 13, color: COLORS.mint, marginBottom: 4 }}>Doctor · DentAI Clinic</p>
               <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)" }}>{user.email}</p>
             </div>
             {photoUrl && (
               <button onClick={() => { setPhotoUrl(null); localStorage.removeItem("doctor_photo"); }}
-                style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", background: "none", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", zIndex: 1, touchAction: "manipulation" }}
+                style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", background: "none", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontFamily: "'Josefin Sans', sans-serif", zIndex: 1, touchAction: "manipulation", whiteSpace: "nowrap" }}
               >Remove photo</button>
             )}
           </div>
 
+          {/* Tab switcher */}
           <div style={{ display: "flex", gap: 6, marginBottom: "1.5rem", background: COLORS.white, padding: 6, borderRadius: 14, border: `1px solid ${COLORS.border}` }}>
             {(["info", "password"] as const).map((tab) => (
               <button key={tab} onClick={() => { setActiveTab(tab); setInfoError(""); setInfoSuccess(""); setPwError(""); setPwSuccess(""); }}
-                style={{ flex: 1, padding: "11px 16px", borderRadius: 10, border: "none", background: activeTab === tab ? COLORS.navy : "transparent", color: activeTab === tab ? "white" : COLORS.navyMid, fontFamily: "'Josefin Sans', sans-serif", fontSize: 13, fontWeight: 700, cursor: "pointer", letterSpacing: "0.04em", transition: "all 0.15s", touchAction: "manipulation" }}
+                style={{ flex: 1, padding: "11px 16px", borderRadius: 10, border: "none", background: activeTab === tab ? COLORS.navy : "transparent", color: activeTab === tab ? "white" : COLORS.navyMid, fontFamily: "'Josefin Sans', sans-serif", fontSize: isMobile ? 12 : 13, fontWeight: 700, cursor: "pointer", letterSpacing: "0.04em", transition: "all 0.15s", touchAction: "manipulation" }}
               >{tab === "info" ? "Personal Info" : "Change Password"}</button>
             ))}
           </div>
 
+          {/* Personal Info Tab */}
           {activeTab === "info" && (
-            <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: "1.75rem", animation: "fadeUp 0.25s ease" }}>
+            <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: isMobile ? "1.25rem" : "1.75rem", animation: "fadeUp 0.25s ease" }}>
               <h2 style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 16, fontWeight: 700, color: COLORS.navy, marginBottom: "1.5rem" }}>Personal Information</h2>
               {infoError   && <div style={{ padding: "12px 16px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, fontSize: 13, color: "#DC2626", marginBottom: "1rem" }}>{infoError}</div>}
               {infoSuccess && <div style={{ padding: "12px 16px", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 10, fontSize: 13, color: "#15803D", marginBottom: "1rem" }}>✓ {infoSuccess}</div>}
@@ -322,8 +322,9 @@ export default function DoctorProfilePage() {
             </div>
           )}
 
+          {/* Password Tab */}
           {activeTab === "password" && (
-            <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: "1.75rem", animation: "fadeUp 0.25s ease" }}>
+            <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: isMobile ? "1.25rem" : "1.75rem", animation: "fadeUp 0.25s ease" }}>
               <h2 style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 16, fontWeight: 700, color: COLORS.navy, marginBottom: "1.5rem" }}>Change Password</h2>
               {pwError   && <div style={{ padding: "12px 16px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, fontSize: 13, color: "#DC2626", marginBottom: "1rem" }}>{pwError}</div>}
               {pwSuccess && <div style={{ padding: "12px 16px", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 10, fontSize: 13, color: "#15803D", marginBottom: "1rem" }}>✓ {pwSuccess}</div>}

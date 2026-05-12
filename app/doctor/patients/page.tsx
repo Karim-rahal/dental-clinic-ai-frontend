@@ -54,16 +54,8 @@ function useBreakpoint() {
 }
 
 function NavIcon({ d }: { d: string }) {
-  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>;
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>;
 }
-function SearchIcon() { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>; }
-function FileIcon() { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>; }
-function ImageIcon() { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>; }
-function DownloadIcon() { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>; }
-function ChevronDownIcon() { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>; }
-function PhoneIcon() { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.82a16 16 0 0 0 6.29 6.29l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>; }
-function EmailIcon() { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>; }
-function EyeIcon() { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>; }
 
 function getInitials(name: string) { return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase(); }
 function formatDate(dt: string) { return new Date(dt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); }
@@ -144,10 +136,10 @@ function Sidebar({ isMobile, isTablet, logout, router, mobileMenuOpen, setMobile
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 64, backgroundColor: COLORS.white, borderTop: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "space-around", zIndex: 60, boxShadow: "0 -2px 12px rgba(44,62,80,0.08)" }}>
           {NAV_ITEMS.map((item) => (
             <button key={item.id} onClick={() => router.push(item.path)}
-              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", color: item.id === "patients" ? COLORS.green : COLORS.navyMid, fontFamily: "inherit", padding: "8px 10px", borderRadius: 10, touchAction: "manipulation", minWidth: 44, minHeight: 44 }}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", color: item.id === "patients" ? COLORS.green : COLORS.navyMid, fontFamily: "inherit", padding: "8px 6px", borderRadius: 10, touchAction: "manipulation", minWidth: 44, minHeight: 44 }}
             >
               <NavIcon d={item.icon} />
-              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.04em", fontFamily: "'Josefin Sans', sans-serif" }}>{item.label.split(" ")[0]}</span>
+              <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.04em", fontFamily: "'Josefin Sans', sans-serif" }}>{item.label.split(" ")[0]}</span>
             </button>
           ))}
         </div>
@@ -161,15 +153,23 @@ function FileCard({ file, onPreview }: { file: PatientFile; onPreview: (f: Patie
   return (
     <div style={{ background: COLORS.offWhite, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
       <div style={{ width: 36, height: 36, borderRadius: 8, background: img ? COLORS.lightMint : COLORS.navyLight, display: "flex", alignItems: "center", justifyContent: "center", color: img ? COLORS.green : COLORS.navyMid, flexShrink: 0, overflow: "hidden" }}>
-        {img && file.file_url ? <img src={file.file_url} alt={file.filename} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : img ? <ImageIcon /> : <FileIcon />}
+        {img && file.file_url ? <img src={file.file_url} alt={file.filename} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        )}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 12, fontWeight: 600, color: COLORS.navy, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{file.filename}</p>
         <p style={{ fontSize: 11, color: COLORS.navyMid }}>{getFileExt(file.filename)} · {formatDate(file.uploaded_at)}</p>
       </div>
       <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-        {img && <button onClick={() => onPreview(file)} style={{ width: 28, height: 28, borderRadius: 7, border: `1px solid ${COLORS.border}`, background: COLORS.white, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.navyMid }}><EyeIcon /></button>}
-        <a href={file.file_url} download={file.filename} target="_blank" rel="noopener noreferrer" style={{ width: 28, height: 28, borderRadius: 7, border: `1px solid ${COLORS.border}`, background: COLORS.white, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.navyMid, textDecoration: "none" }}><DownloadIcon /></a>
+        {img && (
+          <button onClick={() => onPreview(file)} style={{ width: 28, height: 28, borderRadius: 7, border: `1px solid ${COLORS.border}`, background: COLORS.white, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.navyMid, touchAction: "manipulation" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        )}
+        <a href={file.file_url} download={file.filename} target="_blank" rel="noopener noreferrer" style={{ width: 28, height: 28, borderRadius: 7, border: `1px solid ${COLORS.border}`, background: COLORS.white, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.navyMid, textDecoration: "none" }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </a>
       </div>
     </div>
   );
@@ -191,8 +191,16 @@ function PatientRow({ patient, isMobile }: { patient: Patient; isMobile: boolean
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontFamily: "'Josefin Sans', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.navy, marginBottom: 3 }}>{patient.full_name}</p>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: COLORS.navyMid }}><EmailIcon /> {patient.email}</span>
-              {patient.phone_number && <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: COLORS.navyMid }}><PhoneIcon /> {patient.phone_number}</span>}
+              <span style={{ fontSize: 12, color: COLORS.navyMid, display: "flex", alignItems: "center", gap: 4 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                {patient.email}
+              </span>
+              {patient.phone_number && (
+                <span style={{ fontSize: 12, color: COLORS.navyMid, display: "flex", alignItems: "center", gap: 4 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.82a16 16 0 0 0 6.29 6.29l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  {patient.phone_number}
+                </span>
+              )}
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
@@ -206,7 +214,9 @@ function PatientRow({ patient, isMobile }: { patient: Patient; isMobile: boolean
                 <p style={{ fontSize: 10, color: COLORS.navyMid, textTransform: "uppercase", letterSpacing: "0.08em" }}>Visits</p>
               </div>
             )}
-            <div style={{ color: COLORS.navyMid, transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}><ChevronDownIcon /></div>
+            <div style={{ color: COLORS.navyMid, transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
           </div>
         </div>
         {expanded && (
@@ -223,6 +233,8 @@ function PatientRow({ patient, isMobile }: { patient: Patient; isMobile: boolean
           </div>
         )}
       </div>
+
+      {/* Image preview modal */}
       {preview && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }} onClick={() => setPreview(null)}>
           <div style={{ position: "relative", maxWidth: "90vw", maxHeight: "85vh" }} onClick={(e) => e.stopPropagation()}>
@@ -240,9 +252,9 @@ export default function DoctorPatientsPage() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const { isMobile, isTablet } = useBreakpoint();
-  const [patients, setPatients]         = useState<Patient[]>([]);
-  const [loading, setLoading]           = useState(true);
-  const [search, setSearch]             = useState("");
+  const [patients, setPatients]             = useState<Patient[]>([]);
+  const [loading, setLoading]               = useState(true);
+  const [search, setSearch]                 = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const sidebarWidth = isTablet ? 64 : 220;
 
@@ -253,7 +265,10 @@ export default function DoctorPatientsPage() {
       .finally(() => setLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const filtered = patients.filter((p) => { const q = search.toLowerCase(); return !q || p.full_name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q); });
+  const filtered = patients.filter((p) => {
+    const q = search.toLowerCase();
+    return !q || p.full_name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q);
+  });
 
   if (!user) {
     return (
@@ -288,7 +303,7 @@ export default function DoctorPatientsPage() {
           </div>
 
           <div style={{ position: "relative", marginBottom: "1.5rem", animation: "fadeUp 0.35s ease" }}>
-            <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: COLORS.navyMid }}><SearchIcon /></span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={COLORS.navyMid} strokeWidth="1.8" strokeLinecap="round" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" placeholder="Search by name or email…" value={search} onChange={(e) => setSearch(e.target.value)}
               style={{ width: "100%", padding: "12px 16px 12px 42px", borderRadius: 12, border: `1px solid ${COLORS.border}`, background: COLORS.white, fontSize: 14, color: COLORS.navy, fontFamily: "inherit", outline: "none" }} />
           </div>
